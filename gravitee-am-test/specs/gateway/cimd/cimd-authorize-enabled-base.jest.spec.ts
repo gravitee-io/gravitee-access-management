@@ -15,6 +15,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { jira } from '@specs-utils/jira';
 import { setup } from '../../test-fixture';
 import { CIMD_REDIRECT_URI, CimdAuthorizeFixture, setupCimdAuthorizeFixture } from './fixtures/cimd-authorize-fixture';
 import {
@@ -99,6 +100,11 @@ describe('CIMD authorize - ENABLED_BASE', () => {
   it('should return invalid_client_metadata when metadata redirect_uris is missing', async () => {
     const response = await fixture.authorize(fixture.buildClientId('missing-redirect-uris'));
     fixture.expectInvalidClientMetadata(response, 'Missing or invalid redirect_uris');
+  });
+
+  it(jira`should return invalid_client_metadata when metadata authorization_details_types is not an array ${'AM-8154'}`, async () => {
+    const response = await fixture.authorize(fixture.buildClientId('invalid-authorization-details-types'));
+    fixture.expectInvalidClientMetadata(response, 'Invalid authorization_details_types');
   });
 
   it('should reject when requested redirect_uri is not present in metadata redirect_uris', async () => {

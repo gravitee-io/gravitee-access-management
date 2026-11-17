@@ -22,15 +22,16 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdMetadataService;
 import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import io.gravitee.am.model.CimdMetadataDocument;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.model.CimdClientState;
-import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
@@ -54,6 +55,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -61,14 +63,19 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -97,6 +104,9 @@ public class CimdMetadataServiceImplTest {
 
     private static final String CLIENT_URL = "https://localhost/metadata";
     private static final String EXTERNAL_URL = "https://external.example.com/metadata";
+    private static final String PAYMENT_TYPE = "payment_initiation";
+    private static final String ACCOUNT_TYPE = "account_information";
+    private static final int PAYMENT_EXPIRES_IN = 600;
 
     @Mock
     private WebClient webClient;
@@ -1302,6 +1312,209 @@ public class CimdMetadataServiceImplTest {
         verify(cimdClientStateService).upsert(eq(domain), eq(CLIENT_URL), anyString());
     }
 
+    @Test
+    public void shouldRevokeWhenOnlyAuthorizationDetailsTypesChanged() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        JsonObject before = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(PAYMENT_TYPE).add(ACCOUNT_TYPE));
+        JsonObject after = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(PAYMENT_TYPE));
+        CimdClientState existingState = new CimdClientState();
+        existingState.setId("existing-state-id");
+        existingState.setMonitoredPropertiesHash(CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(before));
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        mockFetchSuccess(after.encode());
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        verify(scopeApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(authorizationDetailApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(cimdClientStateService).upsert(domain, CLIENT_URL, CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(after));
+    }
+
+    @Test
+    public void shouldNotStoreHashWhenAuthorizationDetailConsentRevocationFails() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        CimdClientState existingState = new CimdClientState();
+        existingState.setId("existing-state-id");
+        existingState.setMonitoredPropertiesHash("old-hash-that-will-not-match");
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.error(new RuntimeException("revocation failed")));
+        AtomicBoolean hashStored = new AtomicBoolean();
+        when(cimdClientStateService.upsert(any(Domain.class), anyString(), anyString()))
+                .thenReturn(Single.just(new CimdClientState()).doOnSubscribe(subscription -> hashStored.set(true)));
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        assertFalse(hashStored.get());
+    }
+
+    @Test
+    public void shouldKeepMonitoredPropertiesHashOfDocumentsWithoutAuthorizationDetailsTypes() {
+        JsonObject metadata = new JsonObject()
+                .put("client_id", CLIENT_URL)
+                .put("redirect_uris", new JsonArray().add("https://callback.example.com/cb"))
+                .put("token_endpoint_auth_method", "none");
+
+        assertEquals("c63caa9191492ed834e32bf32e422f9f610ada7b6b5d52b8e91a23f4a4afb852",
+                CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(metadata));
+    }
+
+    @Test
+    public void shouldChangeMonitoredPropertiesHashWhenAuthorizationDetailsTypesDeclared() {
+        JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL));
+        JsonObject withEmptyTypes = metadata.copy().put("authorization_details_types", new JsonArray());
+
+        assertNotEquals(CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(metadata),
+                CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(withEmptyTypes));
+    }
+
+    @Test
+    public void shouldRevokeBeforeRejectingMalformedAuthorizationDetailsTypes() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        CimdClientState existingState = new CimdClientState();
+        existingState.setId("existing-state-id");
+        existingState.setMonitoredPropertiesHash(CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(new JsonObject(metadataPayload(CLIENT_URL))));
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        when(authorizationDetailApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), any()))
+                .thenReturn(Completable.complete());
+        mockFetchSuccess(new JsonObject(metadataPayload(CLIENT_URL)).put("authorization_details_types", PAYMENT_TYPE).encode());
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertError(error -> error instanceof InvalidClientMetadataException
+                        && "Invalid authorization_details_types.".equals(error.getMessage()));
+
+        verify(scopeApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+        verify(authorizationDetailApprovalService).revokeByClient(eq(domain), eq(CLIENT_URL), any());
+    }
+
+    @Test
+    public void shouldIgnoreOrderAndDuplicatesOfAuthorizationDetailsTypesInMonitoredPropertiesHash() {
+        JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(PAYMENT_TYPE).add(ACCOUNT_TYPE));
+        JsonObject reordered = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(ACCOUNT_TYPE).add(PAYMENT_TYPE).add(ACCOUNT_TYPE));
+
+        assertEquals(CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(metadata),
+                CimdMetadataServiceImpl.calculateMonitoredPropertiesHash(reordered));
+    }
+
+    @Test
+    public void shouldRevokeTheClientsTokensOnceAfterBothKindsOfConsentAreRevoked() {
+        cimdSettings.setRevokeOnDocumentChange(true);
+        CimdClientState existingState = new CimdClientState();
+        existingState.setId("existing-state-id");
+        existingState.setMonitoredPropertiesHash("old-hash-that-will-not-match");
+        when(cimdClientStateService.findByDomainAndClientId(domain, CLIENT_URL))
+                .thenReturn(Maybe.just(existingState));
+        List<String> revocationOrder = new ArrayList<>();
+        ArgumentCaptor<BiFunction<Domain, RevokeToken, Completable>> scopeTokenRevocation = ArgumentCaptor.forClass(BiFunction.class);
+        ArgumentCaptor<BiFunction<Domain, RevokeToken, Completable>> detailTokenRevocation = ArgumentCaptor.forClass(BiFunction.class);
+        when(scopeApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), scopeTokenRevocation.capture()))
+                .thenReturn(Completable.complete().doOnSubscribe(d -> revocationOrder.add("scope")));
+        when(authorizationDetailApprovalService.revokeByClient(eq(domain), eq(CLIENT_URL), detailTokenRevocation.capture()))
+                .thenReturn(Completable.complete().doOnSubscribe(d -> revocationOrder.add("authorization details")));
+        when(revokeTokenGatewayService.process(any(), any())).thenReturn(Completable.complete());
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        cimdMetadataService.resolveClient(CLIENT_URL, templateClient()).test()
+                .awaitDone(2, TimeUnit.SECONDS)
+                .assertComplete();
+
+        assertEquals(List.of("authorization details", "scope"), revocationOrder);
+        RevokeToken revokeToken = RevokeToken.byClientId(domain, CLIENT_URL);
+        detailTokenRevocation.getValue().apply(domain, revokeToken).test().assertComplete();
+        verify(revokeTokenGatewayService, never()).process(any(), any());
+        scopeTokenRevocation.getValue().apply(domain, revokeToken).test().assertComplete();
+        verify(revokeTokenGatewayService, times(1)).process(domain, revokeToken);
+    }
+
+    // --- authorization_details_types tests ---
+
+    @Test
+    public void shouldKeepTemplateAuthorizationDetailTypesWhenNotDeclared() {
+        Client template = templateClientWithAuthorizationDetailTypes();
+        mockFetchSuccess(metadataPayload(CLIENT_URL));
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, template).test();
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> template.getAuthorizationDetailTypes().equals(client.getAuthorizationDetailTypes()));
+    }
+
+    @Test
+    public void shouldKeepOnlyDeclaredAuthorizationDetailTypesEnabledOnTemplate() {
+        JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(PAYMENT_TYPE).add("Account_Information").add("internal_transfer"));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClientWithAuthorizationDetailTypes()).test();
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of(PAYMENT_TYPE).equals(authorizationDetailTypes(client)));
+    }
+
+    @Test
+    public void shouldGiveNoAuthorizationDetailTypesWhenEmptyArrayDeclared() {
+        JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray());
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClientWithAuthorizationDetailTypes()).test();
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> client.getAuthorizationDetailTypes().isEmpty());
+    }
+
+    @Test
+    public void shouldKeepTemplateExpiryOverrideOfDeclaredAuthorizationDetailType() {
+        JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL))
+                .put("authorization_details_types", new JsonArray().add(PAYMENT_TYPE));
+        mockFetchSuccess(metadata.encode());
+
+        TestObserver<Client> testObserver = cimdMetadataService.resolveClient(CLIENT_URL, templateClientWithAuthorizationDetailTypes()).test();
+
+        testObserver.assertNoErrors();
+        testObserver.assertValue(client -> List.of(new ApplicationAuthorizationDetailTypeSettings(PAYMENT_TYPE, PAYMENT_EXPIRES_IN))
+                .equals(client.getAuthorizationDetailTypes()));
+    }
+
+    @Test
+    public void shouldRejectAuthorizationDetailsTypesThatAreNotAnArrayOfNonEmptyStrings() {
+        List<Object> invalidValues = List.of(
+                PAYMENT_TYPE,
+                new JsonArray().add(1),
+                new JsonArray().add(""),
+                new JsonArray().add(" "),
+                new JsonObject());
+        for (Object invalid : invalidValues) {
+            JsonObject metadata = new JsonObject(metadataPayload(CLIENT_URL)).put("authorization_details_types", invalid);
+            mockFetchSuccess(metadata.encode());
+
+            cimdMetadataService.resolveClient(CLIENT_URL, templateClientWithAuthorizationDetailTypes()).test()
+                    .assertError(error -> error instanceof InvalidClientMetadataException
+                            && "Invalid authorization_details_types.".equals(error.getMessage()));
+        }
+    }
+
     // --- helpers ---
 
     private Completable revokeTokensWith(BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor) {
@@ -1363,6 +1576,18 @@ public class CimdMetadataServiceImplTest {
         template.setClientSecrets(List.of(new ClientSecret()));
         template.setSecretSettings(List.of(new ApplicationSecretSettings()));
         return template;
+    }
+
+    private Client templateClientWithAuthorizationDetailTypes() {
+        Client template = templateClient();
+        template.setAuthorizationDetailTypes(List.of(
+                new ApplicationAuthorizationDetailTypeSettings(PAYMENT_TYPE, PAYMENT_EXPIRES_IN),
+                new ApplicationAuthorizationDetailTypeSettings(ACCOUNT_TYPE)));
+        return template;
+    }
+
+    private static List<String> authorizationDetailTypes(Client client) {
+        return client.getAuthorizationDetailTypes().stream().map(ApplicationAuthorizationDetailTypeSettings::getType).toList();
     }
 
     private ApplicationScopeSettings scopeSetting(String scope, boolean defaultScope) {

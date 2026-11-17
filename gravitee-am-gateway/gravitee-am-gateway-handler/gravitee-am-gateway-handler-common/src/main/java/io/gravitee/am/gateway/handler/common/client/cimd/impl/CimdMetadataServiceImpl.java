@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.CimdUriTrustValidator;
 import lombok.CustomLog;
 import io.gravitee.am.model.CimdClientState;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationAuthorizationDetailTypeSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -91,6 +92,11 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
             "redirect_uris",
             "scope",
             "token_endpoint_auth_method"
+        );
+
+    // Hashed only when present, so that hashes stored before they were monitored still match.
+    private static final List<String> MONITORED_PROPERTIES_WHEN_PRESENT = List.of(
+            "authorization_details_types"
         );
 
     private final Domain domain;
@@ -308,6 +314,9 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         final List<ApplicationScopeSettings> scopes = intersectScopes(
                 metadata.getString("scope"),
                 templateClient.getScopeSettings());
+        final List<ApplicationAuthorizationDetailTypeSettings> authorizationDetailTypes = intersectAuthorizationDetailTypes(
+                readOptionalStringArray(metadata, "authorization_details_types"),
+                templateClient.getAuthorizationDetailTypes());
 
         final Client synthesizedClient;
         try {
@@ -322,6 +331,7 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
         synthesizedClient.setAuthorizedGrantTypes(grantTypes);
         synthesizedClient.setResponseTypes(responseTypes);
         synthesizedClient.setScopeSettings(scopes);
+        synthesizedClient.setAuthorizationDetailTypes(authorizationDetailTypes);
         synthesizedClient.setClientName(metadata.getString("client_name", synthesizedClient.getClientName()));
         final String logoUri = metadata.getString("logo_uri");
         if (logoUri != null && !logoUri.isBlank()) {
@@ -458,6 +468,20 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
                 .toList();
     }
 
+    private static List<ApplicationAuthorizationDetailTypeSettings> intersectAuthorizationDetailTypes(
+            List<String> declared, List<ApplicationAuthorizationDetailTypeSettings> templateTypes) {
+        if (declared == null) {
+            return templateTypes;
+        }
+        if (templateTypes == null) {
+            return List.of();
+        }
+        final Set<String> declaredTypes = new HashSet<>(declared);
+        return templateTypes.stream()
+                .filter(settings -> declaredTypes.contains(settings.getType()))
+                .toList();
+    }
+
     private JWKSet toModelJwkSet(JsonObject jwksAsJson) {
         try {
             final com.nimbusds.jose.jwk.JWKSet parsed = com.nimbusds.jose.jwk.JWKSet.parse(jwksAsJson.encode());
@@ -500,10 +524,21 @@ public class CimdMetadataServiceImpl implements CimdMetadataService {
     }
 
     static String calculateMonitoredPropertiesHash(JsonObject metadata) {
-        final String canonical = MONITORED_PROPERTIES.stream()
-                .map(k -> k + "=" + Optional.ofNullable(metadata.getValue(k)).map(Object::toString).orElse(""))
+        final String canonical = Stream.concat(
+                        MONITORED_PROPERTIES.stream()
+                                .map(k -> k + "=" + Optional.ofNullable(metadata.getValue(k)).map(Object::toString).orElse("")),
+                        MONITORED_PROPERTIES_WHEN_PRESENT.stream()
+                                .filter(metadata::containsKey)
+                                .map(k -> k + "=" + asSet(metadata.getValue(k))))
                 .collect(Collectors.joining("|"));
         return calculateMetadataHash(canonical);
+    }
+
+    private static String asSet(Object value) {
+        if (value instanceof JsonArray array) {
+            return new JsonArray(array.stream().map(String::valueOf).distinct().sorted().toList()).toString();
+        }
+        return String.valueOf(value);
     }
 
     private static String calculateMetadataHash(String metadataJson) {

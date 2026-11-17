@@ -26,16 +26,40 @@ import {
 } from '@management-commands/domain-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { getDefaultIdp } from '@management-commands/idp-management-commands';
-import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
+import { createAuthorizationDetailType } from '@management-commands/authorization-detail-type-management-commands';
+import {
+  buildCreateAndTestUser,
+  listUserAuthorizationDetailConsents,
+  revokeUserAuthorizationDetailConsents,
+} from '@management-commands/user-management-commands';
 import { uniqueName } from '@utils-commands/misc';
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import { getBase64BasicAuth } from '@gateway-commands/utils';
+import { JWT_FORMAT } from '@specs-utils/jwt-format';
+import { introspectToken, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { login } from '@gateway-commands/login-commands';
+import { waitForSyncAfter } from '@gateway-commands/monitoring-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
 import { Application } from '@management-models/Application';
+import { AuthorizationDetailApprovalEntity } from '@management-models/AuthorizationDetailApprovalEntity';
 import { Domain } from '@management-models/Domain';
 import { Fixture } from '../../../test-fixture';
 import { CIMD_REDIRECT_URI } from './cimd-authorize-fixture';
+import { AUTHORIZATION_DETAILS_TEST, toDetailsParam } from '../../authorization-details/fixtures/authorization-details-fixture';
+import {
+  Step,
+  follow,
+  isConsentPage,
+  mergeCookies,
+  openConsentPage,
+  submitConsent,
+} from '../../authorization-details/fixtures/authorization-details-consent-fixture';
 
 export const CIMD_REVOKE_ON_CHANGE_SCENARIO = 'revoke-on-change';
+
+/** WireMock scenario of the {@link CIMD_REVOKE_ON_CHANGE_SCENARIO} document, which moves to `Changed` on its first fetch. */
+export const CIMD_REVOKE_ON_CHANGE_WIREMOCK_SCENARIO = 'cimd-revoke-on-change';
+
+/** WireMock scenario of the document whose `Changed` state drops `account_information` from `authorization_details_types`. */
+export const CIMD_AUTHORIZATION_DETAILS_REVOKE_SCENARIO = 'cimd-authorization-details-revoke';
 
 export interface CimdRevokeOnDocumentChangeFixture extends Fixture {
   accessToken: string;
@@ -44,9 +68,20 @@ export interface CimdRevokeOnDocumentChangeFixture extends Fixture {
   templateApplication: Application;
   preRegisteredApplication: Application;
   clientId: string;
+  /** Client of {@link CIMD_AUTHORIZATION_DETAILS_REVOKE_SCENARIO}. */
+  authorizationDetailsClientId: string;
   redirectUri: string;
   user: { username: string; password: string; id: string };
   introspectToken: (token: string) => Promise<{ active: boolean }>;
+  /** Sends an authorization request, which fetches the client's document once the cache has expired. */
+  authorize: (clientId: string, params?: Record<string, string>) => Promise<any>;
+  setSkipConsent: (skipConsent: boolean) => Promise<void>;
+  /** Signs the user in, approves every consent screen and returns the authorization code. */
+  approveAuthorizationDetails: (clientId: string, details: unknown[]) => Promise<string>;
+  /** Exchanges an authorization code for an access token. */
+  exchangeCode: (clientId: string, code: string) => Promise<string>;
+  authorizationDetailConsents: (clientId: string) => Promise<AuthorizationDetailApprovalEntity[]>;
+  revokeAuthorizationDetailConsents: (clientId: string) => Promise<void>;
 }
 
 export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevokeOnDocumentChangeFixture> => {
@@ -78,6 +113,15 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
       redirectUris: [CIMD_REDIRECT_URI],
     });
 
+    await createAuthorizationDetailType(domain.id, accessToken, {
+      type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE,
+      name: 'Payment initiation',
+    });
+    await createAuthorizationDetailType(domain.id, accessToken, {
+      type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE,
+      name: 'Account information',
+    });
+
     const templateApplication = await updateApplication(
       domain.id,
       accessToken,
@@ -89,6 +133,10 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
             grantTypes: ['authorization_code'],
             responseTypes: ['code'],
             scopeSettings: [{ scope: 'openid', defaultScope: true }],
+            authorizationDetailTypes: [
+              { type: AUTHORIZATION_DETAILS_TEST.PAYMENT_TYPE },
+              { type: AUTHORIZATION_DETAILS_TEST.ACCOUNT_TYPE },
+            ],
           },
           advanced: { skipConsent: true },
         },
@@ -143,20 +191,58 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
     const startedDomain = await waitForDomainStart(domain);
 
     const clientId = `http://wiremock:8080/cimd/ENABLED_BASE/${CIMD_REVOKE_ON_CHANGE_SCENARIO}`;
+    const authorizationDetailsClientId = 'http://wiremock:8080/cimd/ENABLED_BASE/authorization-details-revoke';
+    const domainId = domain.id;
+    const token = accessToken;
+    const oidc = startedDomain.oidcConfig;
 
-    const introspectToken = async (token: string): Promise<{ active: boolean }> => {
-      const callerClientId = preRegisteredApplication.settings.oauth.clientId;
-      const callerClientSecret = preRegisteredApplication.settings.oauth.clientSecret;
+    const authorize = (requestClientId: string, params: Record<string, string> = {}) => {
+      const query = new URLSearchParams({
+        response_type: 'code',
+        client_id: requestClientId,
+        redirect_uri: CIMD_REDIRECT_URI,
+        scope: 'openid',
+        state: 'cimd-revoke',
+        ...params,
+      });
+      return performGet(`${oidc.authorization_endpoint}?${query.toString()}`);
+    };
+
+    const approveAuthorizationDetails = async (requestClientId: string, details: unknown[]): Promise<string> => {
+      const authResponse = await authorize(requestClientId, { authorization_details: toDetailsParam(...details) }).expect(302);
+      const postLogin = await login(authResponse, user.username, requestClientId, userPassword);
+
+      let step: Step = await follow({ response: postLogin, cookie: mergeCookies(postLogin.headers['set-cookie']) });
+      let approvedDetails = false;
+      while (!step.response.headers['location'].startsWith(CIMD_REDIRECT_URI)) {
+        if (isConsentPage(step)) {
+          const page = await openConsentPage(step);
+          approvedDetails ||= page.kind === 'authorization-details';
+          step = await submitConsent(page, true, page.scopes);
+        } else {
+          step = await follow(step);
+        }
+      }
+      expect(approvedDetails).toBe(true);
+      const code = new URL(step.response.headers['location']).searchParams.get('code');
+      expect(code).toBeTruthy();
+      return code;
+    };
+
+    const exchangeCode = async (requestClientId: string, code: string): Promise<string> => {
       const response = await performPost(
-        startedDomain.oidcConfig.introspection_endpoint,
+        oidc.token_endpoint,
         '',
-        `token=${token}&token_type_hint=access_token`,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: 'Basic ' + getBase64BasicAuth(callerClientId, callerClientSecret),
-        },
+        new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: CIMD_REDIRECT_URI,
+          client_id: requestClientId,
+        }).toString(),
+        { 'Content-Type': 'application/x-www-form-urlencoded' },
       ).expect(200);
-      return response.body;
+      expect(response.body.access_token).toMatch(JWT_FORMAT);
+      return response.body.access_token;
     };
 
     return {
@@ -166,9 +252,22 @@ export const setupCimdRevokeOnDocumentChangeFixture = async (): Promise<CimdRevo
       templateApplication,
       preRegisteredApplication,
       clientId,
+      authorizationDetailsClientId,
       redirectUri: CIMD_REDIRECT_URI,
       user: { username: user.username, password: userPassword as string, id: user.id },
-      introspectToken,
+      introspectToken: (token) => introspectToken(oidc.introspection_endpoint, token, applicationBase64Token(preRegisteredApplication)),
+      authorize,
+      setSkipConsent: async (skipConsent) => {
+        await waitForSyncAfter(domainId, () =>
+          patchApplication(domainId, token, { settings: { advanced: { skipConsent } } }, templateApplication.id),
+        );
+      },
+      approveAuthorizationDetails,
+      exchangeCode,
+      revokeAuthorizationDetailConsents: (requestClientId) =>
+        revokeUserAuthorizationDetailConsents(domainId, token, user.id, requestClientId),
+      authorizationDetailConsents: async (requestClientId) =>
+        (await listUserAuthorizationDetailConsents(domainId, token, user.id, { clientId: requestClientId })).data,
       cleanUp: async () => {
         await safeDeleteDomain(domain?.id, accessToken);
       },
