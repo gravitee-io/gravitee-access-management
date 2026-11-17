@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.RememberMeStep;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -37,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ID_KEY;
 import static org.mockito.Mockito.*;
@@ -61,6 +63,8 @@ public class RememberMeStepTest {
 
     @Mock
     private HttpServerRequest httpServerRequest;
+
+    private final Client client = new Client();
 
     private AuthenticationFlowChain authenticationFlowChain;
 
@@ -102,7 +106,8 @@ public class RememberMeStepTest {
         when(routingContext.user()).thenReturn(null);
 
         when(httpServerRequest.getCookie(DEFAULT_REMEMBER_ME_COOKIE_NAME)).thenReturn(Cookie.cookie(DEFAULT_REMEMBER_ME_COOKIE_NAME, "value"));
-        when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.error(new IllegalArgumentException("Error during decoding")));
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class))).thenReturn(Single.error(new IllegalArgumentException("Error during decoding")));
+        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         step.execute(routingContext, authenticationFlowChain);
 
@@ -118,7 +123,8 @@ public class RememberMeStepTest {
 
         final var jwt = new JWT();
         jwt.put(USER_ID_KEY, "12345");
-        when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
+        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         when(gatewayUserService.findById("12345")).thenReturn(Maybe.error(new IllegalStateException("User not found")));
 
@@ -137,7 +143,8 @@ public class RememberMeStepTest {
 
         final var jwt = new JWT();
         jwt.put(USER_ID_KEY, "12345");
-        when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(anyString(), any(Client.class), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
+        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         when(gatewayUserService.findById("12345")).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
 
