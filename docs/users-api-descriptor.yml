@@ -112,6 +112,19 @@ definitions:
         description: Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
         items:
           $ref: '#/definitions/UserConsent'
+  UserId:
+    type: object
+    description: User identity of the consent.
+    properties:
+      id:
+        type: string
+        description: User technical id.
+      externalId:
+        type: string
+        description: User id in the identity provider.
+      source:
+        type: string
+        description: Identity provider technical id the user comes from.
   UserConsent:
     type: object
     properties:
@@ -119,8 +132,7 @@ definitions:
         type: string
         description: Consent technical id.
       userId:
-        type: string
-        description: User technical id.
+        $ref: '#/definitions/UserId'
       clientId:
         type: string
         description: OAuth 2.0 client_id.
