@@ -1332,7 +1332,7 @@ jobs:
   junit_tests:
     executor:
       name: openjdk
-      class: medium
+      class: large
       version: "21.0.6"
     steps:
       - attach_workspace:
