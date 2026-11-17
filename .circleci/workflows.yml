@@ -537,17 +537,6 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
-      # Only this job publishes snapshots to the feed, not deploy-snapshot-on-nexus: both deploy the same
-      # snapshot on the same push, and an Azure feed is immutable, so the second would take a 409.
-      - azure-artifacts-token
-      - run:
-          name: Maven deploy to the Azure feed (snapshots)
-          # The command-line repositories override what the profile sets; both flags because
-          # maven-deploy-plugin reads altSnapshotDeploymentRepository first for a SNAPSHOT version.
-          command: |
-            mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot deploy -DskipTests \
-              -DaltDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1 \
-              -DaltSnapshotDeploymentRepository=azure-artifacts-gravitee-snapshots::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee-snapshots/maven/v1
       - save-maven-job-cache:
           jobName: build_branch
       - persist_to_workspace:
@@ -1507,14 +1496,6 @@ jobs:
                 name: "Maven Test, Package, and Deploy to Gravitee's private Artifactory"
                 command: |
                   mvn -s /tmp/.gravitee.settings.xml -B -U -P gio-artifactory-release,gio-release clean deploy
-            # A fresh token: the deploy above runs the whole test suite and may outlive the first one (one hour).
-            - azure-artifacts-token
-            - run:
-                name: "Maven deploy to the Azure feed (releases)"
-                command: |
-                  mvn -s /tmp/.gravitee.settings.xml -B -P gio-artifactory-release,gio-release deploy -DskipTests \
-                    -DaltDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1 \
-                    -DaltReleaseDeploymentRepository=azure-artifacts-gravitee::https://pkgs.dev.azure.com/graviteeio/packages/_packaging/gravitee/maven/v1
       - when:
           condition: << parameters.dry_run>>
           steps:
