@@ -15,7 +15,7 @@
  */
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { patchDomain, safeDeleteDomain, setupDomainForTest, waitForOidcReady } from '@management-commands/domain-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getDefaultIdp } from '@management-commands/idp-management-commands';
@@ -85,12 +85,24 @@ export interface AuthorizationDetailsFixture extends Fixture {
 export interface AuthorizationDetailsFixtureOptions {
   /** Create the three reference types and enable two of them on the application. Defaults to true. */
   withTypes?: boolean;
+  /**
+   * Make the application the CIMD template and send requests as {@link CIMD_AUTHORIZATION_DETAILS_CLIENT_ID}, whose
+   * document declares only the payment type. Defaults to false.
+   */
+  cimd?: boolean;
 }
+
+export const CIMD_AUTHORIZATION_DETAILS_CLIENT_ID = 'http://wiremock:8080/cimd/ENABLED_BASE/authorization-details';
+/** Its document has no authorization_details_types. */
+export const CIMD_UNDECLARED_TYPES_CLIENT_ID = 'http://wiremock:8080/cimd/ENABLED_BASE/valid-none';
+export const CIMD_UNDECLARED_TYPES_REDIRECT_URI = 'https://client.example.com/callback';
+/** Its document declares an empty authorization_details_types. */
+export const CIMD_EMPTY_TYPES_CLIENT_ID = 'http://wiremock:8080/cimd/ENABLED_BASE/authorization-details-empty';
 
 export const setupAuthorizationDetailsFixture = async (
   options: AuthorizationDetailsFixtureOptions = {},
 ): Promise<AuthorizationDetailsFixture> => {
-  const { withTypes = true } = options;
+  const { withTypes = true, cimd = false } = options;
   let domain: Domain | null = null;
   let accessToken: string | null = null;
   try {
@@ -106,13 +118,14 @@ export const setupAuthorizationDetailsFixture = async (
     const domainHrid = domain.hrid;
 
     const defaultIdp = await getDefaultIdp(domainId, token);
-    const clientId = uniqueName('authz-details-app', true);
+    const applicationClientId = uniqueName('authz-details-app', true);
     const application = await createApplication(domainId, token, {
-      name: clientId,
+      name: applicationClientId,
       type: 'WEB',
-      clientId,
+      clientId: applicationClientId,
       redirectUris: [AUTHORIZATION_DETAILS_TEST.REDIRECT_URI],
     });
+    const clientId = cimd ? CIMD_AUTHORIZATION_DETAILS_CLIENT_ID : applicationClientId;
 
     const createType = (type: NewAuthorizationDetailType) => createAuthorizationDetailType(domainId, token, type);
     if (withTypes) {
@@ -149,6 +162,28 @@ export const setupAuthorizationDetailsFixture = async (
         application.id,
       ),
     );
+
+    if (cimd) {
+      await patchApplication(domainId, token, { template: true }, application.id);
+      await waitForSyncAfter(domainId, () =>
+        patchDomain(domainId, token, {
+          oidc: {
+            cimdSettings: {
+              enabled: true,
+              allowUnsecuredHttpUri: true,
+              allowPrivateIpAddress: true,
+              allowedDomains: [],
+              fetchTimeoutMs: 1500,
+              maxResponseSizeKb: 10,
+              cacheTtlSeconds: 3600,
+              cacheMaxEntries: 500,
+              templateId: application.id,
+            },
+          },
+        }),
+      );
+      await waitForOidcReady(domainHrid);
+    }
 
     await createUser(domainId, token, {
       firstName: 'Authorization',

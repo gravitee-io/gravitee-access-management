@@ -715,6 +715,120 @@
           "request_object_signing_alg": "RS256"
         }
       }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/authorization-details"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/authorization-details",
+          "client_name": "CIMD Authorization Details",
+          "redirect_uris": [
+            "https://example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "authorization_details_types": [
+            "payment_initiation"
+          ]
+        }
+      }
+    },
+    {
+      "scenarioName": "cimd-authorization-details-revoke",
+      "requiredScenarioState": "Started",
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/authorization-details-revoke"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/authorization-details-revoke",
+          "client_name": "CIMD Authorization Details Revoke",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "authorization_details_types": [
+            "payment_initiation",
+            "account_information"
+          ]
+        }
+      }
+    },
+    {
+      "scenarioName": "cimd-authorization-details-revoke",
+      "requiredScenarioState": "Changed",
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/authorization-details-revoke"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/authorization-details-revoke",
+          "client_name": "CIMD Authorization Details Revoke",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "authorization_details_types": [
+            "payment_initiation"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/authorization-details-empty"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/authorization-details-empty",
+          "redirect_uris": [
+            "https://example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "authorization_details_types": []
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/cimd/ENABLED_BASE/invalid-authorization-details-types"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "client_id": "http://wiremock:8080/cimd/ENABLED_BASE/invalid-authorization-details-types",
+          "redirect_uris": [
+            "https://client.example.com/callback"
+          ],
+          "token_endpoint_auth_method": "none",
+          "authorization_details_types": "payment_initiation"
+        }
+      }
     }
   ],
   "importOptions": {

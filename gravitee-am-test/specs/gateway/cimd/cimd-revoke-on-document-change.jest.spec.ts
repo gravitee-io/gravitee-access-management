@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
+import { jira } from '@specs-utils/jira';
 import { retryUntil } from '@utils-commands/retry';
 import { setup } from '../../test-fixture';
 import {
+  CIMD_AUTHORIZATION_DETAILS_REVOKE_SCENARIO,
+  CIMD_REVOKE_ON_CHANGE_WIREMOCK_SCENARIO,
   CimdRevokeOnDocumentChangeFixture,
   setupCimdRevokeOnDocumentChangeFixture,
 } from './fixtures/cimd-revoke-on-document-change-fixture';
-import { resetAllWireMockScenarios } from './fixtures/cimd-wiremock-helpers';
+import { resetAllWireMockScenarios, setWireMockScenarioState } from './fixtures/cimd-wiremock-helpers';
+import { payment } from '../authorization-details/fixtures/authorization-details-fixture';
 import { executeCimdAuthCodeFlow } from './fixtures/cimd-auth-flow-helpers';
 import { waitFor } from '@management-commands/domain-management-commands';
 
@@ -48,25 +51,15 @@ afterAll(async () => {
 });
 
 describe('CIMD revoke on document change', () => {
+  beforeEach(async () => {
+    await setWireMockScenarioState(CIMD_REVOKE_ON_CHANGE_WIREMOCK_SCENARIO, 'Started');
+  });
+
   it('should revoke an access token when the CIMD metadata document changes after cache TTL expires', async () => {
     // Obtain an access token — this triggers the first CIMD metadata fetch (WireMock returns V1
     // and advances the scenario state to "Changed" via newScenarioState).
     const code = await executeCimdAuthCodeFlow(fixture);
-
-    const tokenResponse = await performPost(
-      fixture.oidc.token_endpoint,
-      '',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: fixture.redirectUri,
-        client_id: fixture.clientId,
-      }).toString(),
-      { 'Content-Type': 'application/x-www-form-urlencoded' },
-    ).expect(200);
-
-    const accessToken: string = tokenResponse.body.access_token;
-    expect(accessToken).toBeDefined();
+    const accessToken = await fixture.exchangeCode(fixture.clientId, code);
 
     // Baseline: token should be active.
     const baseline = await fixture.introspectToken(accessToken);
@@ -79,14 +72,7 @@ describe('CIMD revoke on document change', () => {
     // The gateway will re-fetch the document (cache expired), receive V2 from WireMock
     // (scenario is now in "Changed" state), detect the hash difference, and asynchronously
     // revoke all tokens for this client.
-    const triggerParams = new URLSearchParams({
-      response_type: 'code',
-      client_id: fixture.clientId,
-      redirect_uri: fixture.redirectUri,
-      scope: 'openid',
-      state: 'cimd-revoke-trigger',
-    });
-    await performGet(`${fixture.oidc.authorization_endpoint}?${triggerParams.toString()}`);
+    await fixture.authorize(fixture.clientId);
 
     // Poll until the token becomes inactive (revocation is asynchronous).
     await retryUntil(
@@ -106,34 +92,14 @@ describe('CIMD revoke on document change', () => {
     const stableFlowFixture = { ...fixture, clientId: stableClientId };
 
     const code = await executeCimdAuthCodeFlow(stableFlowFixture);
-    const tokenResponse = await performPost(
-      fixture.oidc.token_endpoint,
-      '',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: fixture.redirectUri,
-        client_id: stableClientId,
-      }).toString(),
-      { 'Content-Type': 'application/x-www-form-urlencoded' },
-    ).expect(200);
-
-    const accessToken: string = tokenResponse.body.access_token;
-    expect(accessToken).toBeDefined();
+    const accessToken = await fixture.exchangeCode(stableClientId, code);
 
     const baseline = await fixture.introspectToken(accessToken);
     expect(baseline.active).toBe(true);
 
     // Let the 1-second cache TTL expire, then force a fresh fetch of the (unchanged) document.
     await waitFor(CACHE_TTL_EXPIRY_WAIT_MS);
-    const triggerParams = new URLSearchParams({
-      response_type: 'code',
-      client_id: stableClientId,
-      redirect_uri: fixture.redirectUri,
-      scope: 'openid',
-      state: 'cimd-no-revoke-trigger',
-    });
-    await performGet(`${fixture.oidc.authorization_endpoint}?${triggerParams.toString()}`);
+    await fixture.authorize(stableClientId);
 
     // Continuously assert the token stays active across the observation window. This catches an
     // erroneous asynchronous revocation the moment it happens, rather than only at a single point.
@@ -144,4 +110,47 @@ describe('CIMD revoke on document change', () => {
       await waitFor(REVOCATION_POLL_INTERVAL_MS);
     } while (Date.now() < deadline);
   });
+});
+
+describe('CIMD revoke on document change - authorization detail consents', () => {
+  beforeAll(async () => {
+    await fixture.setSkipConsent(false);
+  });
+
+  afterAll(async () => {
+    await fixture.setSkipConsent(true);
+  });
+
+  beforeEach(async () => {
+    await setWireMockScenarioState(CIMD_AUTHORIZATION_DETAILS_REVOKE_SCENARIO, 'Started');
+    await fixture.revokeAuthorizationDetailConsents(fixture.authorizationDetailsClientId);
+    // so that the test's first fetch reads the reset document rather than a cached one
+    await waitFor(CACHE_TTL_EXPIRY_WAIT_MS);
+  });
+
+  it(
+    jira`should revoke the authorization detail consents and the token when only authorization_details_types changes ${'AM-8155'}`,
+    async () => {
+      const clientId = fixture.authorizationDetailsClientId;
+      const accessToken = await fixture.exchangeCode(clientId, await fixture.approveAuthorizationDetails(clientId, [payment()]));
+      expect((await fixture.introspectToken(accessToken)).active).toBe(true);
+      expect(await fixture.authorizationDetailConsents(clientId)).toHaveLength(1);
+
+      await setWireMockScenarioState(CIMD_AUTHORIZATION_DETAILS_REVOKE_SCENARIO, 'Changed');
+      await waitFor(CACHE_TTL_EXPIRY_WAIT_MS);
+      await fixture.authorize(clientId);
+
+      await retryUntil(
+        () => fixture.introspectToken(accessToken),
+        (body) => body.active === false,
+        { timeoutMillis: 15000, intervalMillis: REVOCATION_POLL_INTERVAL_MS },
+      );
+      const remaining = await retryUntil(
+        () => fixture.authorizationDetailConsents(clientId),
+        (consents) => consents.length === 0,
+        { timeoutMillis: 15000, intervalMillis: REVOCATION_POLL_INTERVAL_MS },
+      );
+      expect(remaining).toEqual([]);
+    },
+  );
 });

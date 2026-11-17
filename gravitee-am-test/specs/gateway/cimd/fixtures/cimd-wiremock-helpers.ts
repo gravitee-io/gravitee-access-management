@@ -28,6 +28,16 @@ export const resetAllWireMockScenarios = async (): Promise<void> => {
   expect(res.ok).toBe(true);
 };
 
+/** Moves a WireMock scenario to `state`. */
+export const setWireMockScenarioState = async (scenario: string, state: string): Promise<void> => {
+  const res = await fetch(`${getWireMockAdminBase()}/__admin/scenarios/${encodeURIComponent(scenario)}/state`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state }),
+  });
+  expect(res.ok).toBe(true);
+};
+
 /**
  * Clears the WireMock request journal (best-effort). Use between tests that assert on request counts.
  */

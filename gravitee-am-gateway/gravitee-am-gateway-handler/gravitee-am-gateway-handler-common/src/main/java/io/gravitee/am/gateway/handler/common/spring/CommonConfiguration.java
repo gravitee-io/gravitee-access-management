@@ -46,6 +46,7 @@ import io.gravitee.am.gateway.handler.common.client.cimd.impl.CimdMetadataServic
 import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.CimdClientStateService;
 import io.gravitee.am.service.CimdMetadataDocumentService;
+import io.gravitee.am.service.AuthorizationDetailApprovalService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
