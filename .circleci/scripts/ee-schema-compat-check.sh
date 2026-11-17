@@ -32,7 +32,7 @@ export PAGER=cat
 #   - A successful `mvn install` so new plugin ZIPs exist under
 #     gravitee-am-gateway/.../target/distribution/plugins/ and
 #     gravitee-am-management-api/.../target/distribution/plugins/
-#   - Maven can resolve artifacts from the Gravitee Artifactory (i.e. you are
+#   - Maven can resolve artifacts from the Gravitee Azure Artifacts feed (i.e. you are
 #     authenticated and settings.xml is configured)
 #
 # Shared CLI, merge-base, and POM version helpers: _compat_common.sh
@@ -253,7 +253,7 @@ for entry in "${TO_CHECK[@]}"; do
       -DoutputDirectory="$OLD_ZIPS_DIR" \
       -q; then
     echo "  ❌  Could not download ${artifactId}:${old_ver} from Maven."
-    echo "      Ensure Artifactory credentials are configured in settings.xml."
+    echo "      Ensure Azure Artifacts feed credentials are configured in settings.xml."
     echo ""
     DOWNLOAD_FAILURES=$((DOWNLOAD_FAILURES + 1))
     continue
@@ -289,7 +289,7 @@ if [[ $MISSING_ZIPS -gt 0 ]]; then
   exit 1
 elif [[ $DOWNLOAD_FAILURES -gt 0 ]]; then
   echo "❌  $DOWNLOAD_FAILURES old plugin ZIP(s) could not be downloaded from Maven."
-  echo "    Check that Artifactory credentials are configured in settings.xml."
+  echo "    Check that Azure Artifacts feed credentials are configured in settings.xml."
   exit 1
 elif [[ $FAILURES -gt 0 ]]; then
   echo "❌  $FAILURES EE plugin(s) have breaking schema changes."
