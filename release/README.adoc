@@ -6,7 +6,7 @@ This repo contains some https://github.com/google/zx[zx] scripts to execute the 
 
 It will allow you to run these pipeline on CircleCI to:
 
-* Launch git release and maven artifact deployment to our local artifactory
+* Launch git release and maven artifact deployment to the Azure Artifacts feed
 * Launch deploy maven artifact to maven central (sonatype)
 * Launch the build and publish of docker images
 * Launch the build and publish the RPM of AM
