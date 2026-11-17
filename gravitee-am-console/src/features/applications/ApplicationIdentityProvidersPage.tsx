@@ -240,7 +240,6 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                 <p aria-live="polite" className="sr-only">
                     {announcement}
                 </p>
-                {/* Fixed layout so the internal and external tables line up column for column. */}
                 <Table aria-label={title} className="table-fixed">
                     <TableHeader>
                         <TableRow>
