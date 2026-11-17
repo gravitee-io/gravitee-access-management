@@ -240,7 +240,7 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                 <p aria-live="polite" className="sr-only">
                     {announcement}
                 </p>
-                <Table aria-label={title} className="table-fixed">
+                <Table aria-label={title} className="min-w-[48rem] table-fixed">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-32">Priority</TableHead>
@@ -309,8 +309,8 @@ function ProviderTable({ title, description, rows, typeName, canEdit, onChange, 
                                     {row.name}
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className="max-w-full truncate">
-                                        {typeName(row.type)}
+                                    <Badge variant="outline" className="max-w-full" title={typeName(row.type)}>
+                                        <span className="truncate">{typeName(row.type)}</span>
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
