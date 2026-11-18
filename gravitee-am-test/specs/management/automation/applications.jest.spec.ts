@@ -23,7 +23,12 @@ import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { retryUntil } from '@utils-commands/retry';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
-import { buildAutomationCertificateDef, buildInlineIdpDef, buildSystemAutomationDef } from './fixtures/automation-definitions';
+import {
+  buildAutomationCertificateDef,
+  buildInlineIdpDef,
+  buildSystemAutomationDef,
+  emptyListPaths,
+} from './fixtures/automation-definitions';
 import {
   AutomationApplicationFixture,
   buildAutomationApplicationDef,
@@ -89,6 +94,14 @@ describe('Automation API - Applications', () => {
     const { updatedAt: updatedAgain, ...after } = (await fixture.client.getApplication(fixture.domainKey, key)).body;
     expect(after).toEqual(before);
     expect(updatedAgain >= updatedAt).toBe(true);
+  });
+
+  it('should omit empty lists from the application on PUT and GET', async () => {
+    const key = fixture.newApplicationKey();
+    const created = await fixture.createApplication({ key });
+    const get = await fixture.client.getApplication(fixture.domainKey, key);
+
+    expect(emptyListPaths({ put: created, get: get.body })).toEqual([]);
   });
 
   it('should store references to a certificate and an identity provider that do not exist yet', async () => {

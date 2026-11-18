@@ -18,7 +18,7 @@ import { afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { uniqueName } from '@utils-commands/misc';
 import { setup } from '../../test-fixture';
 import { AutomationAuthFixture, setupAutomationAuthFixture } from './fixtures/automation-domain-fixture';
-import { AutomationDomainDef, buildAutomationDomainDef } from './fixtures/automation-definitions';
+import { AutomationDomainDef, buildAutomationDomainDef, emptyListPaths } from './fixtures/automation-definitions';
 
 setup(120000);
 
@@ -386,5 +386,15 @@ describe('Automation API - Domain - Round-trip preserves all writable fields', (
       expect(body.referenceType).toBeUndefined();
       expect(body.managedBy).toBeUndefined();
     }
+  });
+
+  it('should omit empty lists but keep empty strings from the domain on PUT and GET', async () => {
+    const { key, response: put } = await createDomain({ description: '' });
+    expect(put.status).toBe(200);
+    const get = await fixture.client.getDomain(key);
+
+    expect(emptyListPaths({ put: put.body, get: get.body })).toEqual([]);
+    expect(put.body.description).toEqual('');
+    expect(get.body.description).toEqual('');
   });
 });
