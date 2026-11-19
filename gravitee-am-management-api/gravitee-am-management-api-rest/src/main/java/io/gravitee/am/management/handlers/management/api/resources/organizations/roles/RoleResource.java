@@ -103,7 +103,7 @@ public class RoleResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.UPDATE)
-                .andThen(permissionService.checkCanGrant(authenticatedUser, organizationId, Reference.organization(organizationId), updateRole.getPermissions()))
+                .andThen(permissionService.checkCanUpdateRole(authenticatedUser, organizationId, Reference.organization(organizationId), role, updateRole.getPermissions()))
                 .andThen(roleService.update(ReferenceType.ORGANIZATION, organizationId, role, updateRole, authenticatedUser)
                         .map(this::convert))
                 .subscribe(response::resume, response::resume);

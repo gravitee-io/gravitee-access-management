@@ -43,7 +43,7 @@ public class OrganizationRoleResourceTest extends JerseySpringTest {
     public void shouldNotUpdateRole_permissionsTheCallerDoesNotHold() {
         final List<String> permissions = List.of("organization_user_delete");
         doReturn(Completable.error(new ResourceForbiddenAccessException("Unable to grant permissions you do not hold: organization_user_delete")))
-                .when(permissionService).checkCanGrant(any(), eq(ORGANIZATION_ID), eq(Reference.organization(ORGANIZATION_ID)), eq(permissions));
+                .when(permissionService).checkCanUpdateRole(any(), eq(ORGANIZATION_ID), eq(Reference.organization(ORGANIZATION_ID)), eq("role-id"), eq(permissions));
         doReturn(Single.just(new Role())).when(roleService).update(any(), eq(ORGANIZATION_ID), eq("role-id"), any(UpdateRole.class), any());
 
         final Response response = target("organizations").path(ORGANIZATION_ID).path("roles").path("role-id")
