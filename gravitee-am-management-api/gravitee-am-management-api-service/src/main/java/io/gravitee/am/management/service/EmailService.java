@@ -16,12 +16,15 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.management.service.model.StagedEmail;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,5 +42,9 @@ public interface EmailService {
     }
 
     Maybe<Email> getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params);
+
+    Single<List<StagedEmail>> prepare(Domain domain, List<StagedEmail> stagedEmails);
+
+    void batch(List<StagedEmail> stagedEmails, int maxAttempts);
 
 }

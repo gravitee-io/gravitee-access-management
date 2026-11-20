@@ -16,8 +16,9 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.model.ActionLease;
-import io.gravitee.am.repository.management.api.ActionLeaseRepository;
+import io.gravitee.am.repository.common.ActionLeaseRepository;
 import io.gravitee.node.api.Node;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.jupiter.api.Test;
@@ -92,5 +93,15 @@ class ActionLeaseServiceImplTest {
         // Then
         observer.assertError(repositoryError);
         observer.assertNotComplete();
+    }
+
+    @Test
+    void shouldReleaseLeaseUsingCurrentNodeId() {
+        when(node.id()).thenReturn(NODE_ID);
+        when(actionLeaseRepository.releaseLease(ACTION, NODE_ID)).thenReturn(Completable.complete());
+
+        actionLeaseService.releaseLease(ACTION).test().assertComplete();
+
+        verify(actionLeaseRepository).releaseLease(ACTION, NODE_ID);
     }
 }
