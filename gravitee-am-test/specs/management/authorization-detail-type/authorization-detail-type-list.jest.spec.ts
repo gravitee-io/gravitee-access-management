@@ -47,9 +47,11 @@ afterAll(async () => {
 
 const domainWithTypes = async (...types: (string | NewAuthorizationDetailType)[]): Promise<string> => {
   const domain = await fixture.newDomain();
-  await Promise.all(
-    types.map((type) => createAuthorizationDetailType(domain.id, fixture.accessToken, typeof type === 'string' ? newType(type) : type)),
-  );
+  // One at a time: each create writes an audit through the domain's own JDBC reporter pool, and a burst of them
+  // exhausts the Postgres connections that the rest of the stack needs.
+  for (const type of types) {
+    await createAuthorizationDetailType(domain.id, fixture.accessToken, typeof type === 'string' ? newType(type) : type);
+  }
   return domain.id;
 };
 
