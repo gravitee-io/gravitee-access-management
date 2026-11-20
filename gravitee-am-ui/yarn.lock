@@ -6987,10 +6987,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@webcomponents/webcomponentsjs@npm:2.8.0":
-  version: 2.8.0
-  resolution: "@webcomponents/webcomponentsjs@npm:2.8.0"
-  checksum: 10c0/f3634dea123572ce86d22e86a863771f805edc535b9656256d855412d4800dd2d219eeee3e40f003885e008f8fc80a4a8dcc15e0bade3246ac25639e48c34294
+"@webcomponents/webcomponentsjs@npm:2.8.1":
+  version: 2.8.1
+  resolution: "@webcomponents/webcomponentsjs@npm:2.8.1"
+  checksum: 10c0/4d2837c11ae9ca85e7cd0d57833a100f75701d07c184d0a83b6ed3c6f9af79397afbcfcec8db3b6b92215ca5e8bc9aa26a4b99838c7c6cacaf1d4c2be7f09f63
   languageName: node
   linkType: hard
 
@@ -11176,7 +11176,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:8.35.1"
     "@typescript-eslint/types": "npm:8.35.1"
     "@typescript-eslint/utils": "npm:8.35.1"
-    "@webcomponents/webcomponentsjs": "npm:2.8.0"
+    "@webcomponents/webcomponentsjs": "npm:2.8.1"
     asciidoctor: "npm:3.0.4"
     asciidoctor-highlight.js: "npm:0.4.0"
     bcryptjs: "npm:3.0.3"
