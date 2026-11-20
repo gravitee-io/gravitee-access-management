@@ -310,6 +310,43 @@ class RefreshTokenStrategyTest {
     }
 
     @Test
+    void shouldNotEscalateScopesWhenOriginalRefreshTokenHasNoScope() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.REFRESH_TOKEN, "refresh-token-value");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("client-id");
+        tokenRequest.setScopes(Set.of("scim")); // attacker requests a privileged scope at refresh time
+        tokenRequest.setParameters(parameters);
+
+        User user = new User();
+        user.setId("user-id");
+
+        Map<String, Object> additionalInfo = new HashMap<>();
+        additionalInfo.put("sub", "user-id");
+
+        Token refreshToken = new AccessToken("token-value");
+        refreshToken.setSubject("user-id");
+        refreshToken.setScope(null); // original token was granted without any scope
+        refreshToken.setClientId("client-id");
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 3600000));
+        refreshToken.setAdditionalInformation(additionalInfo);
+
+        when(tokenService.refresh(eq("refresh-token-value"), any(), eq(client)))
+                .thenReturn(Single.just(refreshToken));
+        when(userAuthenticationManager.loadPreAuthenticatedUserBySub(any(), any()))
+                .thenReturn(Maybe.just(user));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(), any()))
+                .thenReturn(Set.of());
+
+        TokenCreationRequest result = strategy.process(tokenRequest, client, domain).blockingGet();
+
+        assertNotNull(result);
+        // No scope was originally granted, so none may be granted at refresh time
+        assertTrue(result.scopes() == null || result.scopes().isEmpty());
+    }
+
+    @Test
     void shouldPreserveOriginalResourcesFromRefreshToken() {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add(Parameters.REFRESH_TOKEN, "refresh-token-value");
