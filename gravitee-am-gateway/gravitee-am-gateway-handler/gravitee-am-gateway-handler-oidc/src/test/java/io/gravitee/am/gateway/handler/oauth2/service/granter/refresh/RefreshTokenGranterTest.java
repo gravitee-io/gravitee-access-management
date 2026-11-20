@@ -38,9 +38,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -159,5 +164,78 @@ public class RefreshTokenGranterTest {
         OAuth2Request oAuth2RequestArgumentCaptorValue = oAuth2RequestArgumentCaptor.getValue();
         assertNotNull(oAuth2RequestArgumentCaptorValue);
         assertFalse(oAuth2RequestArgumentCaptorValue.isSupportRefreshToken());
+    }
+
+    /**
+     * A refresh token request MUST NOT be able to add a scope that was not originally granted
+     * (RFC 6749 section 6). This guards the specific case where the original refresh token carries
+     * no scope at all: the requested scope must still be rejected rather than passed through.
+     */
+    @Test
+    public void shouldNotEscalateScopes_whenOriginalRefreshTokenHasNoScope() {
+        String refreshTokenValue = "refresh-token";
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.set("refresh_token", refreshTokenValue);
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("my-client-id");
+        tokenRequest.setGrantType(GrantType.REFRESH_TOKEN);
+        tokenRequest.setParameters(parameters);
+        // attacker asks for the privileged 'scim' scope at refresh time
+        tokenRequest.setScopes(new HashSet<>(Set.of("scim")));
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        client.setAuthorizedGrantTypes(List.of("refresh_token"));
+
+        // the original refresh token was issued without any scope
+        RefreshToken storedRefreshToken = new RefreshToken(refreshTokenValue);
+        storedRefreshToken.setScope(null);
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), any(), any())).thenReturn(Single.just(new AccessToken("test-token")));
+        when(tokenService.refresh(refreshTokenValue, tokenRequest, client)).thenReturn(Single.just(storedRefreshToken));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        granter.grant(tokenRequest, client).test().assertComplete().assertNoErrors();
+
+        Set<String> grantedScopes = oAuth2RequestCaptor.getValue().getScopes();
+        assertTrue("no scope must be granted when the original refresh token had none, got: " + grantedScopes,
+                grantedScopes == null || grantedScopes.isEmpty());
+    }
+
+    /**
+     * When the original refresh token carries scopes, a refresh request may only narrow them:
+     * requested scopes are filtered down to the intersection with the originally granted scopes.
+     */
+    @Test
+    public void shouldFilterRequestedScopesToOriginallyGrantedScopes() {
+        String refreshTokenValue = "refresh-token";
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.set("refresh_token", refreshTokenValue);
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId("my-client-id");
+        tokenRequest.setGrantType(GrantType.REFRESH_TOKEN);
+        tokenRequest.setParameters(parameters);
+        // request a legitimately granted scope plus a privileged one
+        tokenRequest.setScopes(new HashSet<>(Set.of("openid", "scim")));
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        client.setAuthorizedGrantTypes(List.of("refresh_token"));
+
+        RefreshToken storedRefreshToken = new RefreshToken(refreshTokenValue);
+        storedRefreshToken.setScope("openid");
+
+        ArgumentCaptor<OAuth2Request> oAuth2RequestCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
+        when(tokenService.create(oAuth2RequestCaptor.capture(), any(), any())).thenReturn(Single.just(new AccessToken("test-token")));
+        when(tokenService.refresh(refreshTokenValue, tokenRequest, client)).thenReturn(Single.just(storedRefreshToken));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        granter.grant(tokenRequest, client).test().assertComplete().assertNoErrors();
+
+        Set<String> grantedScopes = oAuth2RequestCaptor.getValue().getScopes();
+        assertEquals(Set.of("openid"), grantedScopes);
     }
 }
