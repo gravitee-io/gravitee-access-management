@@ -23,7 +23,6 @@ import io.gravitee.am.gateway.reactor.impl.router.VHostGroupRouter;
 import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -44,7 +43,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,6 +55,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
+
+    private static final int MOUNT_ORDER_BASE = Integer.MAX_VALUE - 1;
 
     @Autowired
     private Environment environment;
@@ -143,16 +143,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
             List<Runnable> unmountActions = new ArrayList<>();
 
             if (domain.isVhostMode()) {
-                // Mount the same router for each virtual host / path.
-                // Sort vhosts to ensure proper routing order:
-                // - More specific paths (longer) are checked first
-                // - "/" (catch-all) is always checked last
-                List<VirtualHost> sortedVhosts = domain.getVhosts().stream()
-                        .sorted(Comparator.comparing((VirtualHost vhost) -> vhost.getPath().equals("/") ? 1 : 0)
-                                .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
-                        .toList();
-
-                sortedVhosts.forEach(virtualHost -> {
+                domain.getVhosts().forEach(virtualHost -> {
                     VHostGroupRouter group = groupFor(sanitizePath(virtualHost.getPath()));
                     VHostRouter member = group.addMember(vertx, domain, virtualHost, domainHandler.router());
                     unmountActions.add(() -> group.removeMember(member));
@@ -182,7 +173,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     private VHostGroupRouter groupFor(String path) {
         return pathGroups.computeIfAbsent(path, p -> {
             VHostGroupRouter group = VHostGroupRouter.create(vertx);
-            this.router.route(p).subRouter(group.asRxRouter());
+            this.router.route(p).order(MOUNT_ORDER_BASE - p.length()).subRouter(group.asRxRouter());
             return group;
         });
     }
