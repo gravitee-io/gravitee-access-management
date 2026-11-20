@@ -152,6 +152,28 @@ public class PermissionService {
     }
 
     /**
+     * Same as {@link #checkCanGrant(User, String, Reference, List)} for the permissions added to the given role:
+     * the permissions already carried by the role are not checked.
+     */
+    public Completable checkCanUpdateRole(User caller, String organizationId, Reference scope, String roleId, List<String> flatPermissions) {
+
+        return Completable.defer(() -> {
+            final Map<Permission, Set<Acl>> requested;
+            try {
+                requested = Permission.unflatten(flatPermissions);
+            } catch (IllegalArgumentException e) {
+                return Completable.error(new InvalidRoleException(e.getMessage()));
+            }
+            return roleService.findById(scope.type(), scope.id(), roleId)
+                    .flatMapCompletable(role -> {
+                        final Set<String> added = flattenToSet(requested);
+                        added.removeAll(flattenToSet(role.getPermissionAcls()));
+                        return checkCanGrant(caller, organizationId, scope, added);
+                    });
+        });
+    }
+
+    /**
      * Same as {@link #checkCanGrant(User, String, Reference, List)} for the permissions carried by the given role.
      */
     public Completable checkCanGrantRole(User caller, String organizationId, Reference scope, String roleId) {

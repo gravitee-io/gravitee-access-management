@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import org.mockito.Mockito;
 import io.gravitee.am.service.exception.ResourceForbiddenAccessException;
 import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.Platform;
@@ -1202,6 +1203,72 @@ public class PermissionServiceTest {
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertComplete();
+    }
+
+    @Test
+    public void shouldAllowRoleUpdateKeepingPermissionsCallerDoesNotHold() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role target = role(ROLE_ID2, "target", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(Acl.LIST)));
+        when(roleService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, ROLE_ID2)).thenReturn(Single.just(target));
+
+        TestObserver<Void> obs = cut.checkCanUpdateRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2,
+                Arrays.asList("organization_list", "organization_user_read")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void shouldAllowRoleUpdateRemovingPermissionsCallerDoesNotHold() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role target = role(ROLE_ID2, "target", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(Acl.LIST)));
+        when(roleService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, ROLE_ID2)).thenReturn(Single.just(target));
+
+        TestObserver<Void> obs = cut.checkCanUpdateRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2,
+                Collections.emptyList()).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertComplete();
+    }
+
+    @Test
+    public void shouldRefuseRoleUpdateAddingPermissionsCallerDoesNotHold() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        Role target = role(ROLE_ID2, "target", false, ReferenceType.ORGANIZATION,
+                permissions(Permission.ORGANIZATION, Acl.of(Acl.LIST)));
+        when(roleService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, ROLE_ID2)).thenReturn(Single.just(target));
+
+        TestObserver<Void> obs = cut.checkCanUpdateRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2,
+                Arrays.asList("organization_list", "organization_user_delete")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(ResourceForbiddenAccessException.class);
+        obs.assertError(ex -> ex.getMessage().contains("organization_user_delete") && !ex.getMessage().contains("organization_list"));
+    }
+
+    @Test
+    public void shouldRejectRoleUpdateWithMalformedPermissions() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+
+        TestObserver<Void> obs = cut.checkCanUpdateRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2,
+                Arrays.asList("kingdom_read")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(InvalidRoleException.class);
+    }
+
+    @Test
+    public void shouldFailRoleUpdateWhenRoleNotFound() {
+        DefaultUser caller = organizationMember(USER_ID, helpdesk());
+        when(roleService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, ROLE_ID2)).thenReturn(Single.error(new RoleNotFoundException(ROLE_ID2)));
+
+        TestObserver<Void> obs = cut.checkCanUpdateRole(caller, ORGANIZATION_ID, Reference.organization(ORGANIZATION_ID), ROLE_ID2,
+                Arrays.asList("organization_list")).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertError(RoleNotFoundException.class);
     }
 
     @Test
