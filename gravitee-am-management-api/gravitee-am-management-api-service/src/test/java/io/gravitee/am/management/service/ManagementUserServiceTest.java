@@ -57,6 +57,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -64,6 +65,7 @@ import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.PasswordHistoryException;
@@ -159,6 +161,9 @@ public class ManagementUserServiceTest {
     private IdentityProviderManager identityProviderManager;
 
     @Mock
+    private IdentityProviderService identityProviderService;
+
+    @Mock
     private AuditService auditService;
 
     @Mock
@@ -232,29 +237,135 @@ public class ManagementUserServiceTest {
     }
 
     @Test
-    void shouldCreateUser_invalid_identity_provider() {
-        String domainId = "domain";
-        String clientId = "clientId";
-
+    void shouldNotCreateUserWhenIdentityProviderIsMissing() {
         Domain domain = new Domain();
-        domain.setId(domainId);
+        domain.setId("domain");
 
         NewUser newUser = new NewUser();
         newUser.setUsername(USERNAME);
         newUser.setSource("unknown-idp");
         newUser.setPassword("myPassword");
-        newUser.setClient(clientId);
 
         when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(identityProviderService.findById(ReferenceType.DOMAIN, "domain", "unknown-idp"))
+                .thenReturn(Single.error(new IdentityProviderNotFoundException("unknown-idp")));
 
         userService.create(domain, newUser, null)
                 .test()
                 .assertNotComplete()
-                .assertError(UserProviderNotFoundException.class);
+                .assertError(IdentityProviderNotFoundException.class);
         verify(userRepository, never()).create(any());
     }
 
+    @Test
+    void shouldCreateExternalUserWhenUserProviderIsMissing() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("social-idp");
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(identityProviderService.findById(ReferenceType.DOMAIN, "domain", "social-idp")).thenReturn(Single.just(new IdentityProvider()));
+        when(userRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertComplete()
+                .assertValue(created -> !created.isInternal()
+                        && created.isEnabled()
+                        && created.getPassword() == null
+                        && created.getId().equals(created.getExternalId())
+                        && "social-idp".equals(created.getSource()));
+        verify(passwordHistoryService, never()).addPasswordToHistory(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldKeepExternalIdWhenUserProviderIsMissing() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("social-idp");
+        newUser.setExternalId("ext-id");
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(identityProviderService.findById(ReferenceType.DOMAIN, "domain", "social-idp")).thenReturn(Single.just(new IdentityProvider()));
+        when(userRepository.findByExternalIdAndSource(any(), eq("ext-id"), eq("social-idp"))).thenReturn(Maybe.empty());
+        when(userRepository.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertComplete()
+                .assertValue(created -> "ext-id".equals(created.getExternalId()));
+    }
+
+    @Test
+    void shouldNotCreateExternalUserWithDuplicatedExternalId() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername("other-username");
+        newUser.setSource("social-idp");
+        newUser.setExternalId("ext-id");
+
+        User existing = new User();
+        existing.setUsername(USERNAME);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(identityProviderService.findById(ReferenceType.DOMAIN, "domain", "social-idp")).thenReturn(Single.just(new IdentityProvider()));
+        when(userRepository.findByExternalIdAndSource(any(), eq("ext-id"), eq("social-idp"))).thenReturn(Maybe.just(existing));
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertError(UserAlreadyExistsException.class);
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    void shouldNotCreatePreRegisteredUserWhenUserProviderIsMissing() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("social-idp");
+        newUser.setPreRegistration(true);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(identityProviderService.findById(ReferenceType.DOMAIN, "domain", "social-idp")).thenReturn(Single.just(new IdentityProvider()));
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertError(UserInvalidException.class);
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    void shouldNotCreateInternalUserWithoutPassword() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername(USERNAME);
+        newUser.setSource("idp");
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
+
+        userService.create(domain, newUser, null)
+                .test()
+                .assertError(UserInvalidException.class);
+        verify(userRepository, never()).create(any());
+    }
 
     @Test
     void shouldCreateUser_client_is_null() {
