@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation;
 
+import io.gravitee.am.management.handlers.automation.mapper.AutomationObjectMapperResolver;
 import io.gravitee.am.management.handlers.automation.resource.CertificateResource;
 import io.gravitee.am.management.handlers.automation.resource.CertificatesResource;
 import io.gravitee.am.management.handlers.automation.resource.DataPlaneResource;
@@ -27,7 +28,6 @@ import io.gravitee.am.management.handlers.automation.resource.OrganizationResour
 import io.gravitee.am.management.handlers.automation.resource.ReporterResource;
 import io.gravitee.am.management.handlers.automation.resource.ReportersResource;
 import io.gravitee.am.management.handlers.automation.swagger.AutomationApiDefinition;
-import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.provider.ClientErrorExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.JacksonExceptionMapper;
 import io.gravitee.am.management.handlers.management.api.provider.ManagementExceptionMapper;
@@ -67,7 +67,7 @@ public class AutomationApiApplication extends ResourceConfig {
         register(DataPlanesResource.class);
         register(DataPlaneResource.class);
 
-        register(ObjectMapperResolver.class);
+        register(AutomationObjectMapperResolver.class);
         register(ManagementExceptionMapper.class);
         register(UnrecognizedPropertyExceptionMapper.class);
         register(ClientErrorExceptionMapper.class);

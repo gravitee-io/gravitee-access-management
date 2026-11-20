@@ -163,3 +163,14 @@ export const buildSystemAutomationReporterDef = (overrides: AutomationReporterDe
   ...buildSystemAutomationDef(overrides.key),
   ...attributeMappingsField(overrides.attributeMappings, null),
 });
+
+/** Paths of every empty array in a response body, e.g. `$.settings.oauth.scopeSettings`. */
+export const emptyListPaths = (value: unknown, path = '$'): string[] => {
+  if (Array.isArray(value)) {
+    return value.length === 0 ? [path] : value.flatMap((item, index) => emptyListPaths(item, `${path}[${index}]`));
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.entries(value).flatMap(([field, child]) => emptyListPaths(child, `${path}.${field}`));
+  }
+  return [];
+};
