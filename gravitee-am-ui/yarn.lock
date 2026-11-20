@@ -5344,7 +5344,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/syntax-transformer@npm:0.2.2, @openfga/syntax-transformer@npm:^0.2.0-beta.21":
+"@openfga/syntax-transformer@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@openfga/syntax-transformer@npm:0.2.3"
+  dependencies:
+    ajv: "npm:^8.18.0"
+    antlr4: "npm:^4.13.2"
+    yaml: "npm:^2.8.2"
+  checksum: 10c0/df1846973fa21585a3ddde1b60ae32e27ec9747f4a3b8c18b43050e6fbe2de37d825406157d84eb52509706b6980aad4ef0da3b0d055ad7441866fbe562c5aa2
+  languageName: node
+  linkType: hard
+
+"@openfga/syntax-transformer@npm:^0.2.0-beta.21":
   version: 0.2.2
   resolution: "@openfga/syntax-transformer@npm:0.2.2"
   dependencies:
@@ -11165,7 +11176,7 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@openfga/frontend-utils": "npm:0.2.0-beta.11"
     "@openfga/sdk": "npm:0.2.10"
-    "@openfga/syntax-transformer": "npm:0.2.2"
+    "@openfga/syntax-transformer": "npm:0.2.3"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
     "@types/json-schema": "npm:7.0.15"
