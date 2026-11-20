@@ -1426,7 +1426,7 @@ jobs:
             echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} -t ${IMAGE_TAG}-alpine -t ${IMAGE_TAG_LATEST}-alpine /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/management-api/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
@@ -1441,7 +1441,7 @@ jobs:
             echo ${IMAGE_TAG_LATEST}-debian >> /tmp/built-docker-images.txt
 
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} /tmp
+            docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} -t ${IMAGE_TAG_LATEST} -t ${IMAGE_TAG}-alpine -t ${IMAGE_TAG_LATEST}-alpine /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-noble --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-noble -t ${IMAGE_TAG_LATEST}-noble /tmp
             docker buildx build --push --platform=linux/arm64,linux/amd64 -f docker/gateway/Dockerfile-dev-debian --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG}-debian -t ${IMAGE_TAG_LATEST}-debian /tmp
       - run:
@@ -1607,6 +1607,9 @@ jobs:
       - keeper/env-export:
           secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
           var-name: GITHUB_TOKEN
+      - run:
+          name: Check the Docker release tags
+          command: bash .circleci/scripts/tests/docker-release-tags.test.sh
       - run:
           name: Run schema checker test suite
           command: node scripts/schema-compatibility/test/run-tests.mjs
@@ -2162,45 +2165,28 @@ jobs:
           name: "Build Docker Images: Gravitee AM Community Edition"
           command: |
             export RELEASE_VERSION=$GRAVITEEIO_VERSION
-            export RELEASE_VERSION_MAJOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $1}')
-            export RELEASE_VERSION_MINOR=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $2}')
-            export RELEASE_VERSION_PATCH=$(echo "$GRAVITEEIO_VERSION" | awk -F '.' '{print $3}')
             
+            # The tags of every image, computed by the script of this pipeline's commit (before the checkout of the
+            # released tag, so an older version can be published again with the current tagging rules).
+            export TAG_LATEST TAG_LATEST_SUPPORT
+            tag_gateway=$(.circleci/scripts/docker-release-tags.sh am-gateway "${RELEASE_VERSION}" alpine)
+            tag_gateway_noble=$(.circleci/scripts/docker-release-tags.sh am-gateway "${RELEASE_VERSION}" noble)
+            tag_gateway_debian=$(.circleci/scripts/docker-release-tags.sh am-gateway "${RELEASE_VERSION}" debian)
+            tag_management_api=$(.circleci/scripts/docker-release-tags.sh am-management-api "${RELEASE_VERSION}" alpine)
+            tag_management_api_noble=$(.circleci/scripts/docker-release-tags.sh am-management-api "${RELEASE_VERSION}" noble)
+            tag_management_api_debian=$(.circleci/scripts/docker-release-tags.sh am-management-api "${RELEASE_VERSION}" debian)
+            tag_management_ui=$(.circleci/scripts/docker-release-tags.sh am-management-ui "${RELEASE_VERSION}" '')
+
+            echo "Gravitee Containers : Docker tags"
+            echo "  am-gateway: ${tag_gateway}"
+            echo "  am-gateway (noble): ${tag_gateway_noble}"
+            echo "  am-gateway (debian): ${tag_gateway_debian}"
+            echo "  am-management-api: ${tag_management_api}"
+            echo "  am-management-api (noble): ${tag_management_api_noble}"
+            echo "  am-management-api (debian): ${tag_management_api_debian}"
+            echo "  am-management-ui: ${tag_management_ui}"
+
             git checkout "${GRAVITEEIO_VERSION}"
-            
-            tag_gateway="-t graviteeio/am-gateway:${RELEASE_VERSION}"
-            tag_gateway_noble="-t graviteeio/am-gateway:${RELEASE_VERSION}-noble"
-            tag_gateway_debian="-t graviteeio/am-gateway:${RELEASE_VERSION}-debian"
-            tag_management_api="-t graviteeio/am-management-api:${RELEASE_VERSION}"
-            tag_management_api_noble="-t graviteeio/am-management-api:${RELEASE_VERSION}-noble"
-            tag_management_api_debian="-t graviteeio/am-management-api:${RELEASE_VERSION}-debian"
-            tag_management_ui="-t graviteeio/am-management-ui:${RELEASE_VERSION}"
-
-            if [ "$TAG_LATEST_SUPPORT" == "true" ]; then
-              echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest support"
-
-              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble"
-              tag_gateway_debian="${tag_gateway_debian} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-debian"
-              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-noble"
-              tag_management_api_debian="${tag_management_api_debian} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}-debian"
-              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR}.${RELEASE_VERSION_MINOR}"
-
-            fi;
-
-            if [ "${TAG_LATEST}" == "true" ]; then
-              echo "Gravitee Containers :  Docker tags, Releasing Docker images as latest"
-
-              tag_gateway="${tag_gateway} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR} -t graviteeio/am-gateway:latest"
-              tag_gateway_noble="${tag_gateway_noble} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-gateway:latest-noble"
-              tag_gateway_debian="${tag_gateway_debian} -t graviteeio/am-gateway:${RELEASE_VERSION_MAJOR}-debian -t graviteeio/am-gateway:latest-debian"
-              tag_management_api="${tag_management_api} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-api:latest"
-              tag_management_api_noble="${tag_management_api_noble} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-noble -t graviteeio/am-management-api:latest-noble"
-              tag_management_api_debian="${tag_management_api_debian} -t graviteeio/am-management-api:${RELEASE_VERSION_MAJOR}-debian -t graviteeio/am-management-api:latest-debian"
-              tag_management_ui="${tag_management_ui} -t graviteeio/am-management-ui:${RELEASE_VERSION_MAJOR} -t graviteeio/am-management-ui:latest"
-
-            fi;
 
             docker login --username="${DOCKERHUB_BOT_USER_NAME}" -p="${DOCKERHUB_BOT_USER_TOKEN}"
 
