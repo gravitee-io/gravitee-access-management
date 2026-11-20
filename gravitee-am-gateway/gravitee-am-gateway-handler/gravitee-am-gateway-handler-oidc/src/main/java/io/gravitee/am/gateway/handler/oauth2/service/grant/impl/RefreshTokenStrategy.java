@@ -158,13 +158,12 @@ public class RefreshTokenStrategy implements GrantStrategy {
             return originalScopes;
         }
 
-        if (originalScopes != null && !originalScopes.isEmpty()) {
-            return requestedScopes.stream()
-                    .filter(originalScopes::contains)
-                    .collect(Collectors.toSet());
-        }
-
-        return requestedScopes;
+        // Filter down to the intersection with the originally granted scopes;
+        // this yields an empty set when nothing was originally granted, so a
+        // scope cannot be added at refresh time that was not granted before.
+        return requestedScopes.stream()
+                .filter(scope -> originalScopes != null && originalScopes.contains(scope))
+                .collect(Collectors.toSet());
     }
 
     private Maybe<User> loadUser(JWT jwt, TokenRequest request, String subject) {
