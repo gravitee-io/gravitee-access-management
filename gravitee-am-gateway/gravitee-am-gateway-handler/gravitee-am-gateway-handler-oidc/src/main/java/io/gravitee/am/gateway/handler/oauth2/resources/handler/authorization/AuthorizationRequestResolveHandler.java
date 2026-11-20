@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.http.NoOpResponse;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.utils.DeviceFlowContext;
 import io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -90,9 +91,9 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
         final io.gravitee.am.model.User endUser = routingContext.user() != null ?
                 ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null;
 
-        authorizationRequestResolver.resolve(authorizationRequest, client, endUser)
+        authorizationRequestResolver.resolve(authorizationRequest, client, endUser, !DeviceFlowContext.isDeviceFlow(routingContext))
                 .flatMap(req -> {
-                    if(domain.isRedirectUriExpressionLanguageEnabled()){
+                    if (domain.isRedirectUriExpressionLanguageEnabled() && !DeviceFlowContext.isDeviceFlow(routingContext)) {
                         ExecutionContext executionContext = prepareExecutionContext(routingContext);
                         return authorizationRequestResolver.evaluateELQueryParams(req, client, executionContext);
                     } else {

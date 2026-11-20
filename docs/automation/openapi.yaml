@@ -2563,6 +2563,23 @@ paths:
       - Domains
 components:
   schemas:
+    ApplicationDeviceFlowSettings:
+      type: object
+      description: Per-application override of the domain device code expiry and polling
+        interval. Absent means the application inherits the domain settings.
+      properties:
+        deviceCodeExpiry:
+          type: integer
+          format: int32
+          default: 600
+          description: "Validity, in seconds, of an issued device code and user code."
+        pollingInterval:
+          type: integer
+          format: int32
+          default: 5
+          description: "Minimum delay, in seconds, between two polls of the token\
+            \ endpoint with the same device code."
+      title: Application Device Flow settings
     ApplicationLightweightJwtSettings:
       type: object
       description: Restricts the JWT access token and the ID token returned to the
@@ -2893,8 +2910,8 @@ components:
     AutomationApplicationOAuthSettings:
       type: object
       description: "OAuth 2.0 and OpenID Connect settings of the application. Fields\
-        \ described as computed are filled in by AM when omitted. tokenExchangeOAuthSettings,\
-        \ when omitted, is inherited from the domain."
+        \ described as computed are filled in by AM when omitted. tokenExchangeOAuthSettings\
+        \ and deviceFlowSettings, when omitted, are inherited from the domain."
       properties:
         accessTokenValiditySeconds:
           type: integer
@@ -2953,6 +2970,8 @@ components:
           format: int32
           description: "Default maximum authentication age, in seconds."
           example: 3600
+        deviceFlowSettings:
+          $ref: "#/components/schemas/ApplicationDeviceFlowSettings"
         disableRefreshTokenRotation:
           type: boolean
           default: false
@@ -4065,6 +4084,8 @@ components:
           $ref: "#/components/schemas/AutomationCIBASettings"
         clientRegistrationSettings:
           $ref: "#/components/schemas/AutomationClientRegistrationSettings"
+        deviceFlowSettings:
+          $ref: "#/components/schemas/DeviceFlowSettings"
         postLogoutRedirectUris:
           type: array
           description: URLs the user may be redirected to after sign-out (post_logout_redirect_uri).
@@ -4486,6 +4507,26 @@ components:
           default: true
           description: Whether inline scripts are allowed via a per-request nonce.
       title: CSP settings
+    DeviceFlowSettings:
+      type: object
+      description: RFC 8628 device authorization grant configuration for the domain.
+      properties:
+        deviceCodeExpiry:
+          type: integer
+          format: int32
+          default: 600
+          description: "Validity, in seconds, of an issued device code and user code."
+        enabled:
+          type: boolean
+          default: false
+          description: Whether the device authorization grant is enabled for the domain.
+        pollingInterval:
+          type: integer
+          format: int32
+          default: 5
+          description: "Minimum delay, in seconds, between two polls of the token\
+            \ endpoint with the same device code."
+      title: Device Flow settings
     DryRunError:
       type: object
       description: Validation errors returned when dryRun is true. Absent when validation

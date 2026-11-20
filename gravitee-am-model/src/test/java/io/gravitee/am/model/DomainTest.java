@@ -18,6 +18,7 @@ package io.gravitee.am.model;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.CIMDSettings;
+import io.gravitee.am.model.oidc.DeviceFlowSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Assert;
 import org.junit.Test;
@@ -178,6 +179,8 @@ public class DomainTest {
                 original.getOidc().getSecurityProfileSettings(), copy.getOidc().getSecurityProfileSettings());
         assertNotSame("oidc.cibaSettings must be deep-copied",
                 original.getOidc().getCibaSettings(), copy.getOidc().getCibaSettings());
+        assertNotSame("oidc.deviceFlowSettings must be deep-copied",
+                original.getOidc().getDeviceFlowSettings(), copy.getOidc().getDeviceFlowSettings());
         assertNotSame("loginSettings must be deep-copied", original.getLoginSettings(), copy.getLoginSettings());
         assertNotSame("accountSettings must be deep-copied", original.getAccountSettings(), copy.getAccountSettings());
         assertNotSame("passwordSettings must be deep-copied", original.getPasswordSettings(), copy.getPasswordSettings());
@@ -238,5 +241,39 @@ public class DomainTest {
         Domain copy = new Domain(original);
 
         Assert.assertNull(copy.getVhosts());
+    }
+
+    @Test
+    public void shouldNotUseDeviceFlowWhenOidcSettingsAreMissing() {
+        assertFalse(new Domain("d1").useDeviceFlow());
+    }
+
+    @Test
+    public void shouldNotUseDeviceFlowWhenSettingsAreMissing() {
+        Domain domain = new Domain("d1");
+        domain.setOidc(new OIDCSettings());
+
+        assertFalse(domain.useDeviceFlow());
+    }
+
+    @Test
+    public void shouldNotUseDeviceFlowByDefault() {
+        Domain domain = new Domain("d1");
+        domain.setOidc(OIDCSettings.defaultSettings());
+
+        assertFalse(domain.useDeviceFlow());
+        assertEquals(DeviceFlowSettings.DEFAULT_DEVICE_CODE_EXPIRY_IN_SEC,
+                domain.getOidc().getDeviceFlowSettings().getDeviceCodeExpiry());
+        assertEquals(DeviceFlowSettings.DEFAULT_POLLING_INTERVAL_IN_SEC,
+                domain.getOidc().getDeviceFlowSettings().getPollingInterval());
+    }
+
+    @Test
+    public void shouldUseDeviceFlowWhenEnabled() {
+        Domain domain = new Domain("d1");
+        domain.setOidc(OIDCSettings.defaultSettings());
+        domain.getOidc().getDeviceFlowSettings().setEnabled(true);
+
+        assertTrue(domain.useDeviceFlow());
     }
 }

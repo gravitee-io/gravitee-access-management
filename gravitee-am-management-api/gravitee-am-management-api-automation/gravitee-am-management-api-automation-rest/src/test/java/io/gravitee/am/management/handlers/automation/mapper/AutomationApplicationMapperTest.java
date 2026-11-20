@@ -50,6 +50,7 @@ import io.gravitee.am.model.ManagedBy;
 import io.gravitee.am.model.MfaChallengeType;
 import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.SecretExpirationSettings;
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -166,6 +167,7 @@ class AutomationApplicationMapperTest {
         assertTrue(settings.getAccount().isInherited());
         assertTrue(settings.getCookieSettings().isInherited());
         assertTrue(settings.getOauth().getTokenExchangeOAuthSettings().isInherited());
+        assertNull(settings.getOauth().getDeviceFlowSettings());
         assertNull(settings.getMfa());
         assertNull(settings.getSaml());
         // the model falls back to the default advanced settings
@@ -408,6 +410,10 @@ class AutomationApplicationMapperTest {
         tokenExchange.setInherited(false);
         tokenExchange.setScopeHandling(TokenExchangeScopeHandling.PERMISSIVE);
         oauth.setTokenExchangeOAuthSettings(tokenExchange);
+        ApplicationDeviceFlowSettings deviceFlow = new ApplicationDeviceFlowSettings();
+        deviceFlow.setDeviceCodeExpiry(900);
+        deviceFlow.setPollingInterval(10);
+        oauth.setDeviceFlowSettings(deviceFlow);
         oauth.setTokenEndpointAuthMethod("private_key_jwt");
         oauth.setTokenEndpointAuthSigningAlg("RS256");
         oauth.setJwks(Map.of("keys", List.of(Map.of("kty", "RSA", "kid", "app-key", "use", "sig", "n", "0vx7", "e", "AQAB"))));

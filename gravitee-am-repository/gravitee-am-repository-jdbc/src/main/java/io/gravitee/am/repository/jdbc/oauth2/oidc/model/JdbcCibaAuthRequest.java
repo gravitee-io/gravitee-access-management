@@ -41,6 +41,8 @@ public class JdbcCibaAuthRequest {
     private LocalDateTime lastAccessAt;
     @Column("expire_at")
     private LocalDateTime expireAt;
+    @Column("slow_down_count")
+    private int slowDownCount;
     @Column("ext_transaction_id")
     private String externalTrxId;
     @Column("external_information")
@@ -119,6 +121,14 @@ public class JdbcCibaAuthRequest {
 
     public void setLastAccessAt(LocalDateTime lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    public int getSlowDownCount() {
+        return slowDownCount;
+    }
+
+    public void setSlowDownCount(int slowDownCount) {
+        this.slowDownCount = slowDownCount;
     }
 
     public String getExternalTrxId() {

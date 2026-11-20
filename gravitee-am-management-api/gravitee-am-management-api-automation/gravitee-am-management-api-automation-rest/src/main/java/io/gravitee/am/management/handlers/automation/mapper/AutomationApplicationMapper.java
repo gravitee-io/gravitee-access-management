@@ -184,6 +184,7 @@ public final class AutomationApplicationMapper {
         out.setUserinfoCustomClaims(mapList(in.getUserinfoCustomClaims(), AutomationApplicationMapper::toAutomationUserInfoClaim));
         out.setLightweightJwtSettings(in.getLightweightJwtSettings());
         out.setTokenExchangeOAuthSettings(in.getTokenExchangeOAuthSettings());
+        out.setDeviceFlowSettings(in.getDeviceFlowSettings());
         out.setTokenEndpointAuthMethod(in.getTokenEndpointAuthMethod());
         out.setTokenEndpointAuthSigningAlg(in.getTokenEndpointAuthSigningAlg());
         out.setJwksUri(in.getJwksUri());
@@ -468,6 +469,7 @@ public final class AutomationApplicationMapper {
         out.setUserinfoCustomClaims(mapList(in.getUserinfoCustomClaims(), claim -> UserInfoClaim.of(claim.getClaimName(), claim.getClaimValue())));
         out.setLightweightJwtSettings(in.getLightweightJwtSettings());
         out.setTokenExchangeOAuthSettings(in.getTokenExchangeOAuthSettings() != null ? in.getTokenExchangeOAuthSettings() : new TokenExchangeOAuthSettings());
+        out.setDeviceFlowSettings(in.getDeviceFlowSettings());
         out.setTokenEndpointAuthMethod(in.getTokenEndpointAuthMethod());
         out.setTokenEndpointAuthSigningAlg(in.getTokenEndpointAuthSigningAlg());
         out.setJwksUri(in.getJwksUri());

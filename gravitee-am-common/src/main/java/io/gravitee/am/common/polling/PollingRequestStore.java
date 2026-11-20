@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.exception;
+package io.gravitee.am.common.polling;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class AuthorizationPendingException extends OAuth2Exception {
+import java.util.Date;
 
-    @Override
-    public String getOAuth2ErrorCode() {
-        return "authorization_pending";
-    }
+public interface PollingRequestStore<R extends PollingRequest> {
 
+    Maybe<R> findById(String id);
+
+    Completable touch(String id, Date lastAccessAt, boolean slowDown);
+
+    Single<Boolean> delete(String id);
 }

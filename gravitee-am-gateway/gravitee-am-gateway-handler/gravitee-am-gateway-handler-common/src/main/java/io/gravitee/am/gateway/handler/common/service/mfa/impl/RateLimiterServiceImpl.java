@@ -16,30 +16,22 @@
 package io.gravitee.am.gateway.handler.common.service.mfa.impl;
 
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.ratelimit.AbstractRateLimiterService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.gateway.api.RateLimitRepository;
 import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.CustomLog;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-
-import java.util.Date;
-import java.util.Optional;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 @CustomLog
-public class RateLimiterServiceImpl implements RateLimiterService {
+public class RateLimiterServiceImpl extends AbstractRateLimiterService implements RateLimiterService {
     @Value("${mfa_rate.enabled:false}")
     private boolean isEnabled;
 
@@ -52,10 +44,6 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @Value("${mfa_rate.timeUnit:Minutes}")
     private String timeUnit;
 
-    @Lazy
-    @Autowired
-    RateLimitRepository rateLimitRepository;
-
     @Override
     public boolean isRateLimitEnabled() {
         return isEnabled;
@@ -63,16 +51,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
 
     @Override
     public Single<Boolean> tryConsume(String userId, String factorId, String client, String domainId) {
-        if (timePeriod <= 0 || limit <= 0) {
-            log.warn("Either timePeriod or limit is set to 0. Current value timePeriod: {}, limit: {}", limit, timePeriod);
-            return Single.just(false);
-        }
-
-        final RateLimitCriteria criteria = buildCriteria(userId, factorId, client);
-        return getRateLimit(criteria, domainId).flatMap(rateLimit -> {
-            log.debug("RateLimit value: [{}]", rateLimit);
-            return Single.just(rateLimit.isAllowRequest());
-        });
+        return tryConsume(buildCriteria(userId, factorId, client), domainId);
     }
 
     @Override
@@ -87,39 +66,19 @@ public class RateLimiterServiceImpl implements RateLimiterService {
         return rateLimitRepository.deleteByDomain(domain.getId(), referenceType);
     }
 
-    private Single<RateLimit> getRateLimit(RateLimitCriteria criteria, String domainId) {
-        return rateLimitRepository.findByCriteria(criteria)
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMap(optionalRateLimit -> {
-                    if (optionalRateLimit.isPresent()) {
-                        final RateLimit rateLimit = optionalRateLimit.get();
-                        calculateAndSetTokenLeft(rateLimit, timeUnit, timePeriod, limit);
-                        rateLimit.setUpdatedAt(new Date());
-                        return rateLimitRepository.update(rateLimit);
-                    } else {
-                        final RateLimit rateLimit = new RateLimit();
-                        rateLimit.setUserId(criteria.userId());
-                        rateLimit.setFactorId(criteria.factorId());
-                        rateLimit.setClient(criteria.client());
-                        rateLimit.setReferenceId(domainId);
-                        rateLimit.setReferenceType(ReferenceType.DOMAIN);
-                        rateLimit.setCreatedAt(new Date());
-                        rateLimit.setUpdatedAt(rateLimit.getCreatedAt());
-                        //value of left tokens should be "limit -1" for the first request
-                        rateLimit.setTokenLeft(limit - 1L);
-                        rateLimit.setAllowRequest(true);
-                        return rateLimitRepository.create(rateLimit);
-                    }
+    @Override
+    protected int getLimit() {
+        return limit;
+    }
 
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    log.error("An error occurs while trying to add/update rate limit", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to add/update rate limit.", ex));
-                });
+    @Override
+    protected int getTimePeriod() {
+        return timePeriod;
+    }
+
+    @Override
+    protected String getTimeUnit() {
+        return timeUnit;
     }
 
     private RateLimitCriteria buildCriteria(String userId, String factorId, String client) {

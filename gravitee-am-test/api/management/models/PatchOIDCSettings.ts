@@ -61,6 +61,13 @@ import {
   PatchClientRegistrationSettingsToJSON,
   PatchClientRegistrationSettingsToJSONTyped,
 } from './PatchClientRegistrationSettings';
+import type { PatchDeviceFlowSettings } from './PatchDeviceFlowSettings';
+import {
+  PatchDeviceFlowSettingsFromJSON,
+  PatchDeviceFlowSettingsFromJSONTyped,
+  PatchDeviceFlowSettingsToJSON,
+  PatchDeviceFlowSettingsToJSONTyped,
+} from './PatchDeviceFlowSettings';
 import type { PatchSecurityProfileSettings } from './PatchSecurityProfileSettings';
 import {
   PatchSecurityProfileSettingsFromJSON,
@@ -93,6 +100,12 @@ export interface PatchOIDCSettings {
    * @memberof PatchOIDCSettings
    */
   clientRegistrationSettings?: PatchClientRegistrationSettings;
+  /**
+   *
+   * @type {PatchDeviceFlowSettings}
+   * @memberof PatchOIDCSettings
+   */
+  deviceFlowSettings?: PatchDeviceFlowSettings;
   /**
    *
    * @type {PatchDPoPSettings}
@@ -235,6 +248,7 @@ export function PatchOIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: b
     cimdSettings: json['cimdSettings'] == null ? undefined : PatchCIMDSettingsFromJSON(json['cimdSettings']),
     clientRegistrationSettings:
       json['clientRegistrationSettings'] == null ? undefined : PatchClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    deviceFlowSettings: json['deviceFlowSettings'] == null ? undefined : PatchDeviceFlowSettingsFromJSON(json['deviceFlowSettings']),
     dpopSettings: json['dpopSettings'] == null ? undefined : PatchDPoPSettingsFromJSON(json['dpopSettings']),
     postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
@@ -260,6 +274,7 @@ export function PatchOIDCSettingsToJSONTyped(value?: PatchOIDCSettings | null, i
     cibaSettings: PatchCIBASettingsToJSON(value['cibaSettings']),
     cimdSettings: PatchCIMDSettingsToJSON(value['cimdSettings']),
     clientRegistrationSettings: PatchClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
+    deviceFlowSettings: PatchDeviceFlowSettingsToJSON(value['deviceFlowSettings']),
     dpopSettings: PatchDPoPSettingsToJSON(value['dpopSettings']),
     postLogoutRedirectUris: value['postLogoutRedirectUris'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],

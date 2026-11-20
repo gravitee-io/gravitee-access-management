@@ -49,6 +49,9 @@ public class PatchOIDCSettings {
     @JsonProperty("dpopSettings")
     private Optional<PatchDPoPSettings> dpopSettings;
 
+    @JsonProperty("deviceFlowSettings")
+    private Optional<PatchDeviceFlowSettings> deviceFlowSettings;
+
     @JsonProperty("workloadIdentitySettings")
     private Optional<PatchSpiffeDomainSettings> workloadIdentitySettings;
 
@@ -119,6 +122,14 @@ public class PatchOIDCSettings {
 
     public void setCimdSettings(Optional<PatchCIMDSettings> cimdSettings) {
         this.cimdSettings = cimdSettings;
+    }
+
+    public Optional<PatchDeviceFlowSettings> getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(Optional<PatchDeviceFlowSettings> deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 
     public Optional<PatchSpiffeDomainSettings> getWorkloadIdentitySettings() {
@@ -196,6 +207,16 @@ public class PatchOIDCSettings {
             }
         }
 
+        if (getDeviceFlowSettings() != null) {
+            if (getDeviceFlowSettings().isPresent()) {
+                final PatchDeviceFlowSettings patcher = getDeviceFlowSettings().get();
+                final DeviceFlowSettings source = toPatch.getDeviceFlowSettings();
+                toPatch.setDeviceFlowSettings(patcher.patch(source));
+            } else {
+                toPatch.setDeviceFlowSettings(DeviceFlowSettings.defaultSettings());
+            }
+        }
+
         if (getWorkloadIdentitySettings() != null) {
             if (getWorkloadIdentitySettings().isPresent()) {
                 final PatchSpiffeDomainSettings patcher = getWorkloadIdentitySettings().get();
@@ -219,6 +240,7 @@ public class PatchOIDCSettings {
                 || (dpopSettings != null && dpopSettings.isPresent())
                 || (cibaSettings != null && cibaSettings.isPresent())
                 || (cimdSettings != null && cimdSettings.isPresent())
+                || (deviceFlowSettings != null && deviceFlowSettings.isPresent())
                 || (workloadIdentitySettings != null && workloadIdentitySettings.isPresent())
                 || (postLogoutRedirectUris != null && postLogoutRedirectUris.isPresent())
                 || (requestUris != null && requestUris.isPresent())

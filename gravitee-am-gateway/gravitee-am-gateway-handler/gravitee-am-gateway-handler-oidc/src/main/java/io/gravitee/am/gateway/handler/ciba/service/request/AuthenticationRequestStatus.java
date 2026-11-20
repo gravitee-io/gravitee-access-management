@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.ciba.service.request;
 
+import io.gravitee.am.common.polling.PollingRequestState;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -23,4 +25,12 @@ public enum AuthenticationRequestStatus {
     ONGOING,
     SUCCESS,
     REJECTED;
+
+    public PollingRequestState pollingState() {
+        return switch (this) {
+            case ONGOING -> PollingRequestState.PENDING;
+            case REJECTED -> PollingRequestState.DENIED;
+            case SUCCESS -> PollingRequestState.APPROVED;
+        };
+    }
 }

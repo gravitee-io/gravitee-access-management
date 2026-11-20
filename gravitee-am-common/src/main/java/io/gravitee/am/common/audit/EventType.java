@@ -406,6 +406,10 @@ public interface EventType {
 
     String PERMISSION_EVALUATED = "PERMISSION_EVALUATED";
 
+    String DEVICE_FLOW_VERIFICATION_FAILED = "DEVICE_FLOW_VERIFICATION_FAILED";
+    String DEVICE_FLOW_APPROVED = "DEVICE_FLOW_APPROVED";
+    String DEVICE_FLOW_DENIED = "DEVICE_FLOW_DENIED";
+
     static Collection<String> types() {
         return new TreeSet<>(DeclaredTypes.VALUES);
     }

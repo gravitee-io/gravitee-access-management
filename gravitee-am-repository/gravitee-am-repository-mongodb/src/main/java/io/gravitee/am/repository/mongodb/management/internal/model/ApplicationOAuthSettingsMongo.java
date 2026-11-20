@@ -108,6 +108,8 @@ public class ApplicationOAuthSettingsMongo {
     private ApplicationCrossAppAccessSettingsMongo crossAppAccessSettings;
     private ApplicationLightweightJwtSettingsMongo lightweightJwtSettings;
 
+    private ApplicationDeviceFlowSettingsMongo deviceFlowSettings;
+
     public String getClientId() {
         return clientId;
     }
@@ -714,5 +716,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setLightweightJwtSettings(ApplicationLightweightJwtSettingsMongo lightweightJwtSettings) {
         this.lightweightJwtSettings = lightweightJwtSettings;
+    }
+
+    public ApplicationDeviceFlowSettingsMongo getDeviceFlowSettings() {
+        return deviceFlowSettings;
+    }
+
+    public void setDeviceFlowSettings(ApplicationDeviceFlowSettingsMongo deviceFlowSettings) {
+        this.deviceFlowSettings = deviceFlowSettings;
     }
 }

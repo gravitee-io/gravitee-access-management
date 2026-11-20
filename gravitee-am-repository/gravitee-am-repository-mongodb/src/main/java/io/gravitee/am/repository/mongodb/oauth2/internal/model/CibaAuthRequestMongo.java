@@ -52,6 +52,9 @@ public class CibaAuthRequestMongo {
     @BsonProperty("expire_at")
     private Date expireAt;
 
+    @BsonProperty("slow_down_count")
+    private int slowDownCount;
+
     @BsonProperty("ext_transaction_id")
     private String externalTrxId;
 
@@ -134,6 +137,14 @@ public class CibaAuthRequestMongo {
 
     public void setLastAccessAt(Date lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    public int getSlowDownCount() {
+        return slowDownCount;
+    }
+
+    public void setSlowDownCount(int slowDownCount) {
+        this.slowDownCount = slowDownCount;
     }
 
     public String getExternalTrxId() {

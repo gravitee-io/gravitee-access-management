@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.automation.model;
 
+import io.gravitee.am.model.application.ApplicationDeviceFlowSettings;
 import io.gravitee.am.model.application.ApplicationLightweightJwtSettings;
 import io.gravitee.am.model.application.TokenExchangeOAuthSettings;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,7 +37,7 @@ import java.util.Map;
 @Setter
 @Schema(name = "AutomationApplicationOAuthSettings", title = "Application OAuth 2.0 / OIDC settings",
         description = "OAuth 2.0 and OpenID Connect settings of the application. Fields described as computed are " +
-                "filled in by AM when omitted. tokenExchangeOAuthSettings, when omitted, is inherited from the domain.")
+                "filled in by AM when omitted. tokenExchangeOAuthSettings and deviceFlowSettings, when omitted, are inherited from the domain.")
 public class AutomationApplicationOAuthSettings {
 
     @Schema(description = "OAuth 2.0 grant types the application may use. Computed when omitted, from the application " +
@@ -104,6 +105,9 @@ public class AutomationApplicationOAuthSettings {
 
     @Schema(description = "Token exchange (RFC 8693) behavior of the application. When omitted, inherited from the domain.")
     private TokenExchangeOAuthSettings tokenExchangeOAuthSettings;
+
+    @Schema(description = "Device authorization grant (RFC 8628) device code expiry and polling interval of the application. When omitted, inherited from the domain.")
+    private ApplicationDeviceFlowSettings deviceFlowSettings;
 
     @Schema(description = "Client authentication method at the token endpoint: client_secret_basic, client_secret_post, " +
             "client_secret_jwt, private_key_jwt, tls_client_auth, self_signed_tls_client_auth or none. " +

@@ -154,6 +154,12 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
             whereClause = whereClause.and(where("client").is(criteria.client()));
         }
 
-        return whereClause;
+        if (whereClause.isEmpty()) {
+            return whereClause;
+        }
+
+        return whereClause.and(criteria.purpose() != null && !criteria.purpose().isEmpty()
+                ? where("purpose").is(criteria.purpose())
+                : where("purpose").isNull());
     }
 }

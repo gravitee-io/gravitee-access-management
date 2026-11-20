@@ -21,6 +21,14 @@
           { "name": "u1c1f1", "key": { "userId": 1, "client": 1, "factorId": 1 } }
         ]
       }
+    },
+    {
+      "id": "rate-limit-purpose",
+      "create": {
+        "rate_limit": [
+          { "name": "u1p1", "key": { "userId": 1, "purpose": 1 } }
+        ]
+      }
     }
   ]
 }

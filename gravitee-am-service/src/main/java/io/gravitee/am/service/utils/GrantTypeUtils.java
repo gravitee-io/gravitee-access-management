@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.oauth2.GrantType.AUTHORIZATION_CODE;
 import static io.gravitee.am.common.oauth2.GrantType.CIBA_GRANT_TYPE;
 import static io.gravitee.am.common.oauth2.GrantType.CLIENT_CREDENTIALS;
+import static io.gravitee.am.common.oauth2.GrantType.DEVICE_CODE;
 import static io.gravitee.am.common.oauth2.GrantType.IMPLICIT;
 import static io.gravitee.am.common.oauth2.GrantType.JWT_BEARER;
 import static io.gravitee.am.common.oauth2.GrantType.PASSWORD;
@@ -57,7 +58,7 @@ public class GrantTypeUtils {
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA, CIBA_GRANT_TYPE, TOKEN_EXCHANGE//, DEVIDE_CODE, SAML2_BEARER
+            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA, CIBA_GRANT_TYPE, TOKEN_EXCHANGE, DEVICE_CODE//, SAML2_BEARER
     )));
 
     /**
@@ -101,7 +102,7 @@ public class GrantTypeUtils {
         Set<String> grantTypeSet = Collections.unmodifiableSet(new HashSet<>(oAuthSettings.getGrantTypes()));
         if(grantTypeSet.contains(REFRESH_TOKEN)) {
             //Hybrid is not managed yet and AM does not support refresh token for client_credentials for now...
-            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);
+            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER, DEVICE_CODE);
             //return true if there is no element in common
             if(Collections.disjoint(formattedClientGrantTypes, allowedRefreshTokenGrant)) {
                 return Single.error(new InvalidClientMetadataException(
@@ -116,7 +117,7 @@ public class GrantTypeUtils {
          * (Aka client_credentials and authorization_code, implicit or password...)
         if(grantTypeSet.contains(CLIENT_CREDENTIALS)) {
             //If client_credentials come with at least one of belows grant
-            if(!Collections.disjoint(client.getAuthorizedGrantTypes(),Arrays.asList(AUTHORIZATION_CODE, IMPLICIT, PASSWORD, HYBRID, DEVIDE_CODE))) {
+            if(!Collections.disjoint(client.getAuthorizedGrantTypes(),Arrays.asList(AUTHORIZATION_CODE, IMPLICIT, PASSWORD, HYBRID, DEVICE_CODE))) {
                 return Single.error(new InvalidClientMetadataException(
                         CLIENT_CREDENTIALS+" must not be associated with another grant that imply user authentication"
                 ));

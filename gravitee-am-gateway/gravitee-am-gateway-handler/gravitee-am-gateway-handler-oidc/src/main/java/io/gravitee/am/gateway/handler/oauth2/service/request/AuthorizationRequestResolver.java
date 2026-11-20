@@ -38,8 +38,15 @@ public class AuthorizationRequestResolver extends AbstractRequestResolver<Author
     }
 
     public Single<AuthorizationRequest> resolve(AuthorizationRequest authorizationRequest, Client client, User endUser) {
+        return resolve(authorizationRequest, client, endUser, true);
+    }
+
+    /**
+     * @param withRedirectUri false for a flow that has no redirect_uri at all, such as the device flow
+     */
+    public Single<AuthorizationRequest> resolve(AuthorizationRequest authorizationRequest, Client client, User endUser, boolean withRedirectUri) {
         return resolveAuthorizedScopes(authorizationRequest, client, endUser)
-                .flatMap(request -> resolveRedirectUri(request, client));
+                .flatMap(request -> withRedirectUri ? resolveRedirectUri(request, client) : Single.just(request));
     }
 
     /**

@@ -1,0 +1,86 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>Device Flow</h1>
+  <div>
+    <div fxFlex="70">
+      <form (ngSubmit)="save()">
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle (change)="enableDeviceFlow($event)" [checked]="isDeviceFlowEnabled()" [disabled]="!editMode">
+            Enable Device Flow
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%">Enable the OAuth 2.0 Device Authorization Grant for this security domain</mat-hint>
+        </div>
+        <div class="gv-form-section" fxLayout="column" *ngIf="isDeviceFlowEnabled()">
+          <div class="gv-form-section-title">
+            <h5>Device Flow Settings</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>timer</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Device Code Expiry"
+              name="deviceCodeExpiry"
+              required
+              [min]="DEVICE_FLOW_TIMING_MIN"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.oidc.deviceFlowSettings.deviceCodeExpiry"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Validity period of an issued device code and user code (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>timer</mat-icon>
+            <input
+              matInput
+              type="number"
+              placeholder="Polling Interval"
+              name="pollingInterval"
+              required
+              [min]="DEVICE_FLOW_TIMING_MIN"
+              (ngModelChange)="modelChanged()"
+              [(ngModel)]="domain.oidc.deviceFlowSettings.pollingInterval"
+              [disabled]="!editMode"
+            />
+            <mat-hint>Minimum delay between two polls of the token endpoint with the same device code (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-error *ngIf="!isValid()" style="font-size: 75%">{{ DEVICE_FLOW_TIMINGS_ERROR }}</mat-error>
+        </div>
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button color="primary" [disabled]="!formChanged || !isValid()" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Device Flow</h3>
+      <div class="gv-page-description-content">
+        <p>
+          The OAuth 2.0 Device Authorization Grant (<a href="https://datatracker.ietf.org/doc/html/rfc8628">RFC 8628</a>) lets a device with
+          no browser, or with limited input capabilities such as a TV or a printer, obtain tokens. The device shows a short user code, and
+          the end user enters it on a second device to authorize the pairing while the first device polls the token endpoint.
+        </p>
+        <p>
+          Applications opt in by carrying the <code>urn:ietf:params:oauth:grant-type:device_code</code> grant type, and may override the
+          timings below from their own OAuth settings.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
