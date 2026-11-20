@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionHandlerFactory;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -39,15 +38,14 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-import java.util.Comparator;
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class DefaultReactor extends AbstractService implements Reactor, EventListener<DomainEvent, Domain>, InitializingBean {
+
+    private static final int MOUNT_ORDER_BASE = Integer.MAX_VALUE - 1;
 
     @Autowired
     private Environment environment;
@@ -116,19 +114,17 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
         Domain domain = domainHandler.getDomain();
 
         if (domain.isVhostMode()) {
-            // Mount the same router for each virtual host / path.
-            // Sort vhosts to ensure proper routing order:
-            // - More specific paths (longer) are checked first
-            // - "/" (catch-all) is always checked last
-            List<VirtualHost> sortedVhosts = domain.getVhosts().stream()
-                    .sorted(Comparator.comparing((VirtualHost vhost) -> vhost.getPath().equals("/") ? 1 : 0)
-                            .thenComparing(Comparator.comparing(VirtualHost::getPath).reversed()))
-                    .toList();
-
-            sortedVhosts.forEach(virtualHost -> this.router.mountSubRouter(sanitizePath(virtualHost.getPath()), VHostRouter.router(vertx.getDelegate(), domain, virtualHost, domainHandler.router())));
+            domain.getVhosts().forEach(virtualHost -> mount(virtualHost.getPath(), VHostRouter.router(vertx.getDelegate(), domain, virtualHost, domainHandler.router())));
         } else {
-            this.router.mountSubRouter(sanitizePath(domain.getPath()), VHostRouter.router(vertx.getDelegate(), domain, domainHandler.router()));
+            mount(domain.getPath(), VHostRouter.router(vertx.getDelegate(), domain, domainHandler.router()));
         }
+    }
+
+    private void mount(String path, Router subRouter) {
+        String mountPath = sanitizePath(path);
+        this.router.route(mountPath + "*")
+                .order(MOUNT_ORDER_BASE - mountPath.length())
+                .subRouter(subRouter);
     }
 
     private String sanitizePath(String path) {
